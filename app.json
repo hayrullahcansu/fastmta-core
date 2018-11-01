@@ -1,0 +1,11 @@
+{
+    "test":1,
+    "ip_addressess":[
+        {
+            "ip":"127.0.0.1",
+            "inbound":true,
+            "outbound":true
+        }
+    ]
+
+}
