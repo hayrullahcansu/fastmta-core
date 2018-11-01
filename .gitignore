@@ -12,3 +12,5 @@
 *.out
 
 debug
+test.db
+[Oo]ut/
