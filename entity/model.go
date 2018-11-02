@@ -18,11 +18,11 @@ type Message struct {
 
 type Transaction struct {
 	gorm.Model
-	MessageID         string `gorm:"UNIQUE_INDEX;not null;Column:message_id"`
-	Timestamp         int    `gorm:"Column:transaction_timestamp;INDEX"`
-	ServerHostname    string `gorm:"type:varchar(250);not null;Column:server_hostname"`
-	ServerResponse    string `gorm:"Column:server_response"`
-	TransactionStatus int    `gorm:"Column:transaction_status"`
+	MessageID         string     `gorm:"UNIQUE_INDEX;not null;Column:message_id"`
+	TransactionTime   *time.Time `gorm:"Column:transaction_timestamp;INDEX"`
+	ServerHostname    string     `gorm:"type:varchar(250);not null;Column:server_hostname"`
+	ServerResponse    string     `gorm:"Column:server_response"`
+	TransactionStatus int        `gorm:"Column:transaction_status"`
 }
 
 type User struct {
