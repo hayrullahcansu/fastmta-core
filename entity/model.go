@@ -7,10 +7,13 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type Product struct {
+type Message struct {
 	gorm.Model
-	Code  string
-	Price uint
+	ID       string `gorm:"UNIQUE_INDEX;not null;Column:id"`
+	RcptTo   string `gorm:"type:varchar(200);not null;Column:rcpt_to"`
+	MailFrom string `gorm:"type:varchar(250);not null;Column:mail_from"`
+	Data     string `gorm:"not null;Column:data"`
+	Status   string `gorm:"type:varchar(10);not null;Column:status;INDEX"`
 }
 
 type User struct {
@@ -18,7 +21,7 @@ type User struct {
 	Name         string
 	Age          sql.NullInt64
 	Birthday     *time.Time
-	Email        string  `gorm:"type:varchar(100);unique_index"`
+	Email        string  `gorm:"type:varchar(100);unique_index;"`
 	Role         string  `gorm:"size:255"`        // set field size to 255
 	MemberNumber *string `gorm:"unique;not null"` // set member number to unique and not null
 	Num          int     `gorm:"AUTO_INCREMENT"`  // set num to auto incrementable
