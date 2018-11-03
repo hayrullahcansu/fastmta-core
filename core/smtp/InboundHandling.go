@@ -104,8 +104,10 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			}
 			bodyParaIndex := strings.Index(cmd, " BODY=")
 			mimeMode := ""
+			fromData := ""
 			if bodyParaIndex > -1 {
 				mimeMode = strings.Trim(cmd[bodyParaIndex+6:], " ")
+				fromData = strings.Trim(cmdOrginal[0:bodyParaIndex], " ")
 				if mimeMode == "7BIT" {
 					mtaMessage.MimeMode = mimeMode
 				} else if mimeMode == "8BITMIME" {
@@ -117,7 +119,7 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 				}
 			}
 			mailFrom := ""
-			address := strings.Trim(cmd[strings.Index(cmd, ":")+1:], " ")
+			address := strings.Trim(fromData[strings.Index(fromData, ":")+1:], " ")
 			if address != "<>" {
 				mailUser, err := mail.ParseAddress(address)
 				if err != nil {
@@ -127,6 +129,8 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 				}
 				mailFrom = mailUser.Address
 				mtaMessage.MailFrom = mailFrom
+				_ = WriteAll(conn, "250 Ok")
+				continue
 			}
 		}
 
