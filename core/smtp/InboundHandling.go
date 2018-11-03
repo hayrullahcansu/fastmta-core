@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/mail"
 	"strings"
 	"time"
 
 	OS "../../cross"
+	"../../entity"
+	"github.com/google/uuid"
 )
 
 const (
@@ -25,9 +28,10 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 	}
 	errorCounter := 0
 	hasHello := false
+	var mtaMessage *entity.Message
 	for {
-		cmd, err := ReadAll(conn)
-		cmd = strings.ToUpper(cmd)
+		cmdOrginal, err := ReadAll(conn)
+		cmd := strings.ToUpper(cmdOrginal)
 		if err != nil {
 			//error
 		}
@@ -49,6 +53,7 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 		if cmd == "RSET" {
 			_ = WriteAll(conn, "250 Ok")
 			//TODO: Reset the mail transaction state. Forget any mail from rcpt to data.
+			mtaMessage = nil
 			continue
 		}
 		if cmd == "NOOP" {
@@ -92,6 +97,37 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			_ = WriteAll(conn, "503 5.5.1 Error: authentication not enabled")
 			//TODO: Enable Authentication
 			continue
+		}
+		if strings.HasPrefix(cmd, "MAIL FROM:") {
+			mtaMessage = &entity.Message{
+				MessageID: uuid.New().String(),
+			}
+			bodyParaIndex := strings.Index(cmd, " BODY=")
+			mimeMode := ""
+			if bodyParaIndex > -1 {
+				mimeMode = strings.Trim(cmd[bodyParaIndex+6:], " ")
+				if mimeMode == "7BIT" {
+					mtaMessage.MimeMode = mimeMode
+				} else if mimeMode == "8BITMIME" {
+					mtaMessage.MimeMode = mimeMode
+				} else {
+					errorCounter++
+					_ = WriteAll(conn, "501 Syntax error")
+					continue
+				}
+			}
+			mailFrom := ""
+			address := strings.Trim(cmd[strings.Index(cmd, ":")+1:], " ")
+			if address != "<>" {
+				mailUser, err := mail.ParseAddress(address)
+				if err != nil {
+					errorCounter++
+					_ = WriteAll(conn, "501 Syntax error")
+					continue
+				}
+				mailFrom = mailUser.Address
+				mtaMessage.MailFrom = mailFrom
+			}
 		}
 
 	}

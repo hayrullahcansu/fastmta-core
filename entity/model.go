@@ -13,6 +13,7 @@ type Message struct {
 	MailFrom  string `gorm:"type:varchar(250);not null;Column:mail_from"`
 	Data      string `gorm:"not null;Column:data"`
 	Status    string `gorm:"type:varchar(10);not null;Column:status;INDEX"`
+	MimeMode  string `gorm:"type:varchar(10);not null;Column:mimemod"`
 }
 
 type Transaction struct {
