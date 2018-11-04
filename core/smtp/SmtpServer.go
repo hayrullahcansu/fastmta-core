@@ -52,13 +52,14 @@ func CreateNewSmtpServer(vmta *VirtualMta) *SmtpServer {
 }
 
 func (smtpServer *SmtpServer) Run() {
-	mergedAddress := fmt.Sprintf("%s:%s", smtpServer.VMta.IPAddressString, smtpServer.Port)
+	mergedAddress := fmt.Sprintf("%s:%d", smtpServer.VMta.IPAddressString, smtpServer.Port)
 	listener, err := net.Listen("tcp", mergedAddress)
 
 	if err != nil {
 		panic(fmt.Sprintf("%s Can't listen inbound %s", mergedAddress, err))
 		//LOG
 	}
+	fmt.Printf("%s Listening", mergedAddress)
 	defer listener.Close()
 
 	for {
