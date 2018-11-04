@@ -11,7 +11,7 @@ type Boss struct {
 	InboundMtas []*ZMSmtp.SmtpServer
 }
 
-func CreateBoss(config *conf.Config) *Boss {
+func New(config *conf.Config) *Boss {
 	return &Boss{
 		Config:      config,
 		VirtualMtas: make([]*ZMSmtp.VirtualMta, 0),

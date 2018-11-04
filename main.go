@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 
-	"./entity"
+	"./boss"
 	"./initialize"
 )
 
 func main() {
 	fmt.Println("hello")
 	conf := initialize.Run()
-	fmt.Println(conf.IPAddresses[0].IP)
-	entity.Run()
+	boss := boss.New(conf)
+	boss.Run()
+	//entity.Run()
+	var e int
+
+	fmt.Scanf("%#X", &e)
 
 }
