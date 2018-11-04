@@ -3,7 +3,6 @@ package smtp
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/mail"
 	"strings"
@@ -35,6 +34,9 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 		cmd := strings.ToUpper(cmdOrginal)
 		if err != nil {
 			//TODO: fix this error
+			fmt.Printf("%s"+OS.NewLine, err)
+			_ = WriteAll(conn, "420 Timeout connection problem")
+			break
 		}
 		if cmd == "" {
 			//probably wrong command
@@ -107,7 +109,7 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			}
 			bodyParaIndex := strings.Index(cmd, " BODY=")
 			mimeMode := ""
-			fromData := ""
+			fromData := cmdOrginal
 			if bodyParaIndex > -1 {
 				mimeMode = strings.Trim(cmd[bodyParaIndex+6:], " ")
 				fromData = strings.Trim(cmdOrginal[0:bodyParaIndex], " ")
@@ -208,11 +210,13 @@ func ReadData(conn net.Conn) (string, error) {
 
 func ReadAll(conn net.Conn) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(ReadDeadLine))
-	data, err := ioutil.ReadAll(conn)
+	reader := bufio.NewReader(conn)
+
+	readLine, _, err := reader.ReadLine()
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		return "", err
 	}
-	return string(data), err
+	return string(readLine), nil
 }
 
 func WriteAll(conn net.Conn, data string) error {
