@@ -10,7 +10,10 @@ type Router struct {
 }
 
 func New() *Router {
-	return &Router{}
+	return &Router{
+		RelayMessage: make(chan *entity.MessageTransaction),
+		StopChannel:  make(chan bool),
+	}
 }
 
 func (router *Router) Run() {
