@@ -6,6 +6,15 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+type Weekday int
+
+const (
+	Sunday Weekday = iota + 1
+	Monday
+	Tuesday
+	Wednesday
+)
+
 type MessageTransaction struct {
 	gorm.Model
 	MessageID          string
