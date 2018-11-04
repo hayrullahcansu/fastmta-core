@@ -1,6 +1,7 @@
 package smtp
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -28,12 +29,12 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 	}
 	errorCounter := 0
 	hasHello := false
-	var mtaMessage *entity.Message
+	var mtaMessage *entity.MessageTransaction
 	for {
 		cmdOrginal, err := ReadAll(conn)
 		cmd := strings.ToUpper(cmdOrginal)
 		if err != nil {
-			//error
+			//TODO: fix this error
 		}
 		if cmd == "" {
 			//probably wrong command
@@ -99,8 +100,10 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			continue
 		}
 		if strings.HasPrefix(cmd, "MAIL FROM:") {
-			mtaMessage = &entity.Message{
+			mtaMessage = &entity.MessageTransaction{
 				MessageID: uuid.New().String(),
+				RcptTo:    make([]string, 0),
+				Headers:   make(map[string]*string),
 			}
 			bodyParaIndex := strings.Index(cmd, " BODY=")
 			mimeMode := ""
@@ -134,8 +137,73 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			}
 		}
 
+		//CONTUNIE HERE
+		if strings.HasPrefix(cmd, "RCPT TO:") {
+			if mtaMessage == nil || mtaMessage.MailFrom == "" {
+				_ = WriteAll(conn, "503 Bad sequence of commands")
+				continue
+			}
+			mailUser, err := mail.ParseAddress(strings.Trim(cmd[strings.Index(cmd, ":")+1:], " "))
+			if err != nil {
+				errorCounter++
+				_ = WriteAll(conn, "501 Syntax error")
+				continue
+			}
+			mailUserComponents := strings.Split(mailUser.Address, "@")
+			_, domain := mailUserComponents[0], mailUserComponents[1]
+			if domain == "" {
+				//TODO: LOCALDELIVERY
+			}
+			mtaMessage.MessageDestination = "Relay"
+			mtaMessage.RcptTo = append(mtaMessage.RcptTo, mailUser.Address)
+			_ = WriteAll(conn, "250 Ok")
+			continue
+		}
+		if cmd == "DATA" {
+			if mtaMessage == nil || mtaMessage.MailFrom == "" {
+				errorCounter++
+				_ = WriteAll(conn, "503 Bad sequence of commands")
+				continue
+			} else if len(mtaMessage.RcptTo) < 1 {
+				errorCounter++
+				_ = WriteAll(conn, "554 No valid recipients")
+				continue
+			}
+			_ = WriteAll(conn, "354 Go ahead")
+			data, err := ReadData(conn)
+			if err != nil {
+				//TODO: fix this error
+			}
+			//TODO: AddHeader -> Received
+			mtaMessage.Data = data
+			_ = WriteAll(conn, "250 Message queued for delivery")
+			mtaMessage = nil
+			continue
+		}
+		errorCounter++
+		_ = WriteAll(conn, "502 5.5.2 Error: command not recognized")
+		continue
 	}
 
+}
+
+func ReadData(conn net.Conn) (string, error) {
+	conn.SetReadDeadline(time.Now().Add(ReadDeadLine))
+	var builder strings.Builder
+	reader := bufio.NewReader(conn)
+	var dataLine string
+	for {
+		readLine, _, err := reader.ReadLine()
+		if err != nil {
+			return "", err
+		}
+		dataLine = string(readLine)
+		if dataLine == "." {
+			break
+		}
+		builder.WriteString(dataLine)
+	}
+	return builder.String(), nil
 }
 
 func ReadAll(conn net.Conn) (string, error) {
