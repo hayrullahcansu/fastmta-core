@@ -8,6 +8,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const (
+	InboundExchange         string = "ex_inbound"
+	InboundStagingQueueName string = "zetamail_inbound_staging"
+)
+
 type RabbitMqClient struct {
 	MakeSureConnection bool
 	IsConnected        bool
@@ -16,14 +21,18 @@ type RabbitMqClient struct {
 	Channel            *amqp.Channel
 }
 
-func New() *RabbitMqClient {
-	client := &RabbitMqClient{}
+func New(conf *conf.RabbitMqConfig) *RabbitMqClient {
+	client := &RabbitMqClient{
+		MakeSureConnection: false,
+		IsConnected:        false,
+		Conf:               conf,
+	}
 	return client
 }
 
-func (client *RabbitMqClient) Connect(conf *conf.RabbitMqConfig, makeSure bool) (*amqp.Connection, *amqp.Channel) {
+func (client *RabbitMqClient) Connect(makeSure bool) (*amqp.Connection, *amqp.Channel) {
 	if !client.IsConnected {
-		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", conf.UserName, conf.Password, conf.Host, conf.Port))
+		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", client.Conf.UserName, client.Conf.Password, client.Conf.Host, client.Conf.Port))
 		if err != nil {
 			panic(fmt.Sprintf("Can't connect rabbitClient error:%s", err))
 		}
@@ -53,7 +62,7 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 					client.IsConnected = false
 					client.MakeSureConnection = false
 					fmt.Printf("RabbitMqClient error handled: %s%s", err, OS.NewLine)
-					defer client.Connect(client.Conf, true)
+					defer client.Connect(true)
 					break
 				case message := <-notifyReturn:
 					err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
@@ -76,9 +85,20 @@ func (client *RabbitMqClient) QueueDeclare(name string, durable bool, autoDelete
 		args,       // arguments
 	)
 }
+
+func (client *RabbitMqClient) QueueBind(name string, exchangeName string, routingKey string, noWait bool, args amqp.Table) error {
+	return client.Channel.QueueBind(
+		name,
+		routingKey,   // durable
+		exchangeName, // delete when usused
+		noWait,       // exclusive
+		args,         // arguments
+	)
+}
+
 func (client *RabbitMqClient) ExchangeDeclare(name string, durable bool, autoDelete bool, internal bool, noWait bool, args amqp.Table) error {
 	return client.Channel.ExchangeDeclare(
-		"logs",     // name
+		name,       // name
 		"fanout",   // type
 		durable,    // durable
 		autoDelete, // auto-deleted
@@ -98,4 +118,15 @@ func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandat
 			ContentType: "text/plain",
 			Body:        data,
 		})
+}
+
+func (client *RabbitMqClient) Consume(queue string, consumerTag string, autoAck bool, exclusive bool, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error) {
+	return client.Channel.Consume(
+		queue,       // exchange
+		consumerTag, // routing key
+		autoAck,     // mandatory
+		exclusive,   // immediate
+		false,
+		noWait,
+		args)
 }

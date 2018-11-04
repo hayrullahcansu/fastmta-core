@@ -179,6 +179,7 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			//TODO: AddHeader -> Received
 			mtaMessage.Data = data
 			_ = WriteAll(conn, "250 Message queued for delivery")
+			AppendMessage(mtaMessage)
 			mtaMessage = nil
 			continue
 		}
@@ -187,6 +188,10 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 		continue
 	}
 
+}
+
+func AppendMessage(message *entity.MessageTransaction) {
+	//TODO: add to exchange and queue
 }
 
 func ReadData(conn net.Conn) (string, error) {
