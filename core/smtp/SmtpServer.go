@@ -3,6 +3,9 @@ package smtp
 import (
 	"fmt"
 	"net"
+
+	"../../conf"
+	"../../queue"
 )
 
 type VirtualMta struct {
@@ -34,20 +37,27 @@ func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, i
 }
 
 type SmtpServer struct {
-	ID           string
-	VMta         *VirtualMta
-	VmtaHostName string
-	VmtaIPAddr   *net.IPAddr
-	Port         int
+	ID             string
+	VMta           *VirtualMta
+	VmtaHostName   string
+	VmtaIPAddr     *net.IPAddr
+	Port           int
+	RabbitMqClient *queue.RabbitMqClient
 }
 
-func CreateNewSmtpServer(vmta *VirtualMta) *SmtpServer {
+func CreateNewSmtpServer(vmta *VirtualMta, config *conf.Config) *SmtpServer {
+	client := queue.New(&config.RabbitMq)
+	client.Connect(true)
+	client.ExchangeDeclare(queue.InboundExchange, true, false, false, false, nil)
+	que, _ := client.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
+	client.QueueBind(que.Name, queue.InboundExchange, "", false, nil)
 	return &SmtpServer{
-		ID:           "",
-		VMta:         vmta,
-		VmtaHostName: vmta.VmtaHostName,
-		VmtaIPAddr:   vmta.VmtaIPAddr,
-		Port:         vmta.Port,
+		ID:             "",
+		VMta:           vmta,
+		VmtaHostName:   vmta.VmtaHostName,
+		VmtaIPAddr:     vmta.VmtaIPAddr,
+		Port:           vmta.Port,
+		RabbitMqClient: client,
 	}
 }
 
