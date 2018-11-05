@@ -41,6 +41,8 @@ func (client *RabbitMqClient) Connect(makeSure bool) (*amqp.Connection, *amqp.Ch
 			panic(fmt.Sprintf("Can't connect rabbitClient error:%s", err))
 		}
 		client.IsConnected = true
+		client.Conn = conn
+		client.Channel = channel
 		if makeSure {
 			client.MakeSureConnectionEndless()
 		}
