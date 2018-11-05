@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -10,6 +11,7 @@ import (
 
 	OS "../../cross"
 	"../../entity"
+	"../../queue"
 	"github.com/google/uuid"
 )
 
@@ -178,10 +180,14 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 			}
 			//TODO: AddHeader -> Received
 			mtaMessage.Data = data
-			_ = WriteAll(conn, "250 Message queued for delivery")
-			AppendMessage(mtaMessage)
-			mtaMessage = nil
-			continue
+
+			ok, err := AppendMessage(server, mtaMessage)
+			if ok {
+				_ = WriteAll(conn, "250 Message queued for delivery")
+				mtaMessage = nil
+				continue
+			}
+			_ = WriteAll(conn, "432 The recipient’s Exchange Server incoming mail queue has been stopped")
 		}
 		errorCounter++
 		_ = WriteAll(conn, "502 5.5.2 Error: command not recognized")
@@ -190,8 +196,16 @@ func InboundHandler(server *SmtpServer, conn net.Conn) {
 
 }
 
-func AppendMessage(message *entity.MessageTransaction) {
+func AppendMessage(server *SmtpServer, message *entity.MessageTransaction) (bool, error) {
 	//TODO: add to exchange and queue
+	data, err := json.Marshal(message)
+	if err == nil {
+		err = server.RabbitMqClient.Publish(queue.InboundExchange, "", false, false, data)
+		if err == nil {
+			return true, err
+		}
+	}
+	return false, err
 }
 
 func ReadData(conn net.Conn) (string, error) {
