@@ -2,6 +2,9 @@ package exchange
 
 import (
 	"sync"
+
+	"../../entity"
+	"github.com/golang-collections/go-datastructures/queue"
 )
 
 type Domain struct {
@@ -9,12 +12,17 @@ type Domain struct {
 	Name         string
 	MXRecords    []string
 	ParentRouter *Router
+	MessageQueue *queue.Queue
 }
 
-func New(name string, router *Router) *Domain {
+func NewDomain(name string, router *Router) *Domain {
 	return &Domain{
 		mutex:        &sync.Mutex{},
 		Name:         name,
 		ParentRouter: router,
+		MessageQueue:    queue.New()
 	}
+}
+func (domain *Domain) AddMessage(message *entity.Message) {
+
 }

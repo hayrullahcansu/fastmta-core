@@ -30,6 +30,7 @@ type MessageTransaction struct {
 type Message struct {
 	gorm.Model
 	MessageID          string `gorm:"UNIQUE_INDEX;not null;Column:message_id"`
+	Host               string `gorm:"type:varchar(200);not null;Column:host"`
 	RcptTo             string `gorm:"type:varchar(200);not null;Column:rcpt_to"`
 	MailFrom           string `gorm:"type:varchar(250);not null;Column:mail_from"`
 	Data               string `gorm:"not null;Column:data"`

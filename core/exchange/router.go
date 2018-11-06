@@ -5,23 +5,27 @@ import (
 )
 
 type Router struct {
-	RelayMessage chan *entity.MessageTransaction
-	StopChannel  chan bool
+	Domains        map[string]*Domain
+	MessageChannel chan *entity.Message
+	StopChannel    chan bool
 }
 
-func New() *Router {
+func NewRouter() *Router {
 	return &Router{
-		RelayMessage: make(chan *entity.MessageTransaction),
-		StopChannel:  make(chan bool),
+		Domains:        make(map[string]*Domain),
+		MessageChannel: make(chan *entity.Message),
+		StopChannel:    make(chan bool),
 	}
 }
 
 func (router *Router) Run() {
+	defer close(router.MessageChannel)
+	defer close(router.StopChannel)
 	for {
 		select {
-		case message, ok := <-router.RelayMessage:
+		case message, ok := <-router.MessageChannel:
 			if ok {
-				RelayMessage(message)
+				router.progressMessage(message)
 			}
 		case stop := <-router.StopChannel:
 			if stop {
@@ -31,9 +35,16 @@ func (router *Router) Run() {
 	}
 }
 
-func RelayMessage(message *entity.MessageTransaction) {
-	//SaveModel
-	//
+func (router *Router) RelayMessage(message *entity.Message) {
+	router.MessageChannel <- message
+}
+
+func (router *Router) progressMessage(message *entity.Message) {
+	domain, ok := router.Domains[message.Host]
+	if !ok {
+		domain = NewDomain(message.Host, router)
+	}
+	domain.ParentRouter = router
 }
 
 func (router *Router) Stop() {
