@@ -43,8 +43,11 @@ func (router *Router) progressMessage(message *entity.Message) {
 	domain, ok := router.Domains[message.Host]
 	if !ok {
 		domain = NewDomain(message.Host, router)
+		domain.ParentRouter = router
+		router.Domains[message.Host] = domain
+		go domain.Run()
 	}
-	domain.ParentRouter = router
+	domain.AddMessage(message)
 }
 
 func (router *Router) Stop() {
