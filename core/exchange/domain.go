@@ -1,28 +1,44 @@
 package exchange
 
 import (
+	"net"
 	"sync"
 
 	"../../entity"
-	"github.com/golang-collections/go-datastructures/queue"
+	"../exchange"
+	"github.com/emnl/goods/queue"
 )
 
 type Domain struct {
 	mutex        *sync.Mutex
 	Name         string
-	MXRecords    []string
+	MXRecords    []*net.MX
 	ParentRouter *Router
-	MessageQueue *queue.Queue
+	Messages     *queue.Queue
 }
 
 func NewDomain(name string, router *Router) *Domain {
-	return &Domain{
+	domain := &Domain{
 		mutex:        &sync.Mutex{},
 		Name:         name,
 		ParentRouter: router,
-		MessageQueue:    queue.New()
+		Messages:     queue.New(),
 	}
+	mx, err := net.LookupMX(name)
+	if err == nil {
+		domain.MXRecords = mx
+	}
+	return domain
 }
+
+func (domain *Domain) Run(outboundClient *exchange.OutboundSmtpServer) {
+	outboundClient.ConsumeMessage(domain.)
+}
+
 func (domain *Domain) AddMessage(message *entity.Message) {
+	domain.Messages.Enqueue(message)
+}
+
+func (domain *Domain) RemoveFromRouter() {
 
 }

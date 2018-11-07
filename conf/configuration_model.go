@@ -10,6 +10,7 @@ type Config struct {
 //VirtualMta is ip addresses and define working types
 type VirtualMta struct {
 	IP       string `json:"ip"`
+	HostName string `json:"hostname"`
 	Inbound  bool   `json:"inbound"`
 	Outbound bool   `json:"outbound"`
 }

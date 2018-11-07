@@ -3,6 +3,19 @@
     "ip_addressess":[
         {
             "ip":"127.0.0.1",
+            "hostname":"vmta1.localhost",
+            "inbound":true,
+            "outbound":true
+        },
+        {
+            "ip":"192.168.1.10",
+            "hostname":"vmta2.localhost",
+            "inbound":true,
+            "outbound":true
+        },
+        {
+            "ip":"192.168.1.11",
+            "hostname":"vmta3.localhost",
             "inbound":true,
             "outbound":true
         }
