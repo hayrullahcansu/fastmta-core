@@ -10,6 +10,7 @@ import (
 
 const (
 	InboundExchange         string = "ex_inbound"
+	OutboundExchange        string = "ex_outbound"
 	InboundStagingQueueName string = "zetamail_inbound_staging"
 )
 
