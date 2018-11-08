@@ -92,3 +92,12 @@ func (router *Router) progressGeneralMessage() {
 		}
 	}
 }
+
+func (router *Router) GetVirtualMta() (*smtp.VirtualMta, bool) {
+	for _, value := range router.OutboundVirtualMtaPool {
+		if !value.IsInUsage() {
+			return value, true
+		}
+	}
+	return nil, false
+}
