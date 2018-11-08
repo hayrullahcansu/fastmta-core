@@ -1,19 +1,25 @@
 package exchange
 
 import (
+	"fmt"
+
 	"../../entity"
+	"../smtp"
 )
 
 type Router struct {
-	Domains        map[string]*Domain
-	MessageChannel chan *entity.Message
-	StopChannel    chan bool
+	BulkChannel            chan *entity.Message
+	GeneralChannel         chan *entity.Message
+	MessageChannel         chan *entity.Message
+	StopChannel            chan bool
+	OutboundVirtualMtaPool []*smtp.VirtualMta
 }
 
 func NewRouter() *Router {
 	return &Router{
-		Domains:        make(map[string]*Domain),
-		MessageChannel: make(chan *entity.Message),
+		BulkChannel:    make(chan *entity.Message, 1000),
+		GeneralChannel: make(chan *entity.Message, 500),
+		MessageChannel: make(chan *entity.Message, 1000),
 		StopChannel:    make(chan bool),
 	}
 }
@@ -33,6 +39,9 @@ func (router *Router) Run() {
 			}
 		}
 	}
+	go router.progressBulkMessage()
+	go router.progressGeneralMessage()
+
 }
 
 func (router *Router) RelayMessage(message *entity.Message) {
@@ -40,16 +49,46 @@ func (router *Router) RelayMessage(message *entity.Message) {
 }
 
 func (router *Router) progressMessage(message *entity.Message) {
-	domain, ok := router.Domains[message.Host]
-	if !ok {
-		domain = NewDomain(message.Host, router)
-		domain.ParentRouter = router
-		router.Domains[message.Host] = domain
-		go domain.Run()
+	switch message.Host {
+	case "gmail.com":
+	case "yandex.com":
+	case "yandex.com.tr":
+		router.BulkChannel <- message
+		break
+	default:
+		router.GeneralChannel <- message
 	}
-	domain.AddMessage(message)
+
+	// if !ok {
+	// domain = NewDomain(message.Host, router)
+	// domain.ParentRouter = router
+	// router.Domains[message.Host] = domain
+	// go domain.Run()
+	// }
+	// domain.AddMessage(message)
 }
 
 func (router *Router) Stop() {
 	router.StopChannel <- true
+}
+
+func (router *Router) progressBulkMessage() {
+	for {
+		select {
+		case bulk, ok := <-router.BulkChannel:
+			if ok {
+				fmt.Println(bulk.Host)
+			}
+		}
+	}
+}
+func (router *Router) progressGeneralMessage() {
+	for {
+		select {
+		case general, ok := <-router.GeneralChannel:
+			if ok {
+				fmt.Println(general.Host)
+			}
+		}
+	}
 }

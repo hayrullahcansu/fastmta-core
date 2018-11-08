@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"../../entity"
-	"../exchange"
+	"../smtp"
 	"github.com/emnl/goods/queue"
 )
 
@@ -31,8 +31,8 @@ func NewDomain(name string, router *Router) *Domain {
 	return domain
 }
 
-func (domain *Domain) Run(outboundClient *exchange.OutboundSmtpServer) {
-	outboundClient.ConsumeMessage(domain.)
+func (domain *Domain) Run(outboundClient *smtp.OutboundSmtpServer) {
+	//outboundClient.ConsumeMessage(domain.)
 }
 
 func (domain *Domain) AddMessage(message *entity.Message) {
