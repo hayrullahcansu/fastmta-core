@@ -20,6 +20,7 @@ type VirtualMta struct {
 
 //CreateNewVirtualMta creates new dto
 func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, isOutbound bool) *VirtualMta {
+
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		panic(fmt.Sprintf("%s given ip address cant parsing", ip))
