@@ -30,7 +30,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 	}
 	errorCounter := 0
 	hasHello := false
-	var mtaMessage *entity.MessageTransaction
+	var mtaMessage *entity.InboundMessageTransaction
 	for {
 		cmdOrginal, err := ReadAll(conn)
 		cmd := strings.ToUpper(cmdOrginal)
@@ -104,7 +104,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 			continue
 		}
 		if strings.HasPrefix(cmd, "MAIL FROM:") {
-			mtaMessage = &entity.MessageTransaction{
+			mtaMessage = &entity.InboundMessageTransaction{
 				MessageID: uuid.New().String(),
 				RcptTo:    make([]string, 0),
 				Headers:   make(map[string]*string),
@@ -196,7 +196,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 
 }
 
-func AppendMessage(server *InboundSmtpServer, message *entity.MessageTransaction) (bool, error) {
+func AppendMessage(server *InboundSmtpServer, message *entity.InboundMessageTransaction) (bool, error) {
 	//TODO: add to exchange and queue
 	data, err := json.Marshal(message)
 	if err == nil {

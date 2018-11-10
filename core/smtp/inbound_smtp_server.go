@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"../../conf"
+	"../../global"
 	"../../queue"
 )
 
@@ -17,8 +17,8 @@ type InboundSmtpServer struct {
 	RabbitMqClient *queue.RabbitMqClient
 }
 
-func CreateNewInboundSmtpServer(vmta *VirtualMta, config *conf.Config) *InboundSmtpServer {
-	client := queue.New(&config.RabbitMq)
+func CreateNewInboundSmtpServer(vmta *VirtualMta) *InboundSmtpServer {
+	client := queue.New(global.StaticRabbitMqConfig)
 	client.Connect(true)
 	client.ExchangeDeclare(queue.InboundExchange, true, false, false, false, nil)
 	que, _ := client.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)

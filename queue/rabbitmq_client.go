@@ -5,6 +5,7 @@ import (
 
 	"../conf"
 	OS "../cross"
+	"../global"
 	"github.com/streadway/amqp"
 )
 
@@ -22,11 +23,11 @@ type RabbitMqClient struct {
 	Channel            *amqp.Channel
 }
 
-func New(conf *conf.RabbitMqConfig) *RabbitMqClient {
+func New() *RabbitMqClient {
 	client := &RabbitMqClient{
 		MakeSureConnection: false,
 		IsConnected:        false,
-		Conf:               conf,
+		Conf:               global.StaticRabbitMqConfig,
 	}
 	return client
 }
@@ -132,4 +133,8 @@ func (client *RabbitMqClient) Consume(queue string, consumerTag string, autoAck 
 		false,
 		noWait,
 		args)
+}
+func (client *RabbitMqClient) Close() {
+	client.Channel.Close()
+	client.Conn.Close()
 }
