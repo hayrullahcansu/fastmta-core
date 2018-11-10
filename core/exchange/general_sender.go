@@ -1,16 +1,23 @@
 package exchange
 
-import "../smtp"
+import (
+	"fmt"
+
+	".."
+	"../../entity"
+	"../smtp"
+)
 
 type GeneralSender struct {
-	domain       Domain
-	ParentRouter *Router
-	virtualMta   *smtp.VirtualMta
+	MessageChannel chan *entity.Message
+	ParentRouter   *Router
+	virtualMta     *smtp.VirtualMta
 }
 
 func NewGeneralSender(router *Router) *GeneralSender {
 	return &GeneralSender{
-		ParentRouter: router,
+		MessageChannel: make(chan *entity.Message, 100),
+		ParentRouter:   router,
 	}
 }
 
@@ -21,6 +28,19 @@ func (sender *GeneralSender) AssignVirtualMta() {
 	}
 }
 
-func (sender *GeneralSender) Send() {
+func (sender *GeneralSender) Run() {
+	for {
+		select {
+		case msg, ok := <-sender.MessageChannel:
+			if ok {
+				domain, err := core.NewDomain(msg.Host)
+				if err != nil {
+					//TODO: this is bounce domain not found
+					transactionResult := smtp.SendMessage(msg, nil, domain)
+					fmt.Println(transactionResult)
+				}
 
+			}
+		}
+	}
 }

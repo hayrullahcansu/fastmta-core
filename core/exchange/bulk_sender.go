@@ -1,5 +1,9 @@
 package exchange
 
+import (
+	".."
+)
+
 type BulkSender struct {
-	Domains map[string]*Domain
+	DomainMessageStacks map[string]*core.DomainMessageStack
 }
