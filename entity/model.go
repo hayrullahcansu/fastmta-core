@@ -15,11 +15,23 @@ const (
 	Wednesday
 )
 
-type MessageTransaction struct {
+type InboundMessageTransaction struct {
 	gorm.Model
 	MessageID          string
 	Headers            map[string]*string
 	RcptTo             []string
+	MailFrom           string
+	Data               string
+	Status             string
+	MimeMode           string
+	MessageDestination string
+}
+
+type OutboundMessageTransaction struct {
+	gorm.Model
+	MessageID          string
+	Headers            map[string]*string
+	RcptTo             string
 	MailFrom           string
 	Data               string
 	Status             string
@@ -46,4 +58,18 @@ type Transaction struct {
 	ServerHostname    string     `gorm:"type:varchar(250);not null;Column:server_hostname"`
 	ServerResponse    string     `gorm:"Column:server_response"`
 	TransactionStatus int        `gorm:"Column:transaction_status"`
+}
+
+type Domain struct {
+	gorm.Model
+	DomainName string     `gorm:"type:varchar(250);UNIQUE_INDEX;Column:domain_name"`
+	MXRecords  []MXRecord `gorm:"foreignkey:DomainID"`
+}
+
+type MXRecord struct {
+	gorm.Model
+	DomainID       uint
+	BaseDomainName string `gorm:"type:varchar(500);INDEX;Column:base_domain_name"`
+	Host           string `gorm:"type:varchar(500);Column:mx_host_name"`
+	Pref           uint16 `gorm:"Column:mx_preference"`
 }

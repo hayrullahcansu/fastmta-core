@@ -2,10 +2,13 @@ package entity
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
+
+var once sync.Once
 
 func Run() {
 	db, err := gorm.Open("sqlite3", "test.db")
@@ -13,10 +16,6 @@ func Run() {
 		panic("failed to connect database")
 	}
 	defer db.Close()
-
-	// Migrate the schema
-	//db.AutoMigrate(&Product{})
-
 	// Create
 	//db.Create(&Product{Code: "L1212", Price: 1000})
 
@@ -30,5 +29,25 @@ func Run() {
 
 	// Delete - delete product
 	//db.Delete(&product)
-	fmt.Println("Done")
+
+}
+
+func GetDbContext() (*gorm.DB, error) {
+
+	db, err := gorm.Open("sqlite3", "test.db")
+	if err != nil {
+		panic("failed to connect database")
+	}
+	once.Do(func() {
+		// Migrate the schema
+		fmt.Println("migration first")
+		db.AutoMigrate(
+			&Message{},
+			&Transaction{},
+			&Domain{},
+			&MXRecord{},
+		)
+		fmt.Println("migration done")
+	})
+	return db, err
 }
