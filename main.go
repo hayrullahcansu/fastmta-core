@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 
 	"./boss"
-	"./initialize"
+	"./global"
 )
 
 var ops int64
@@ -37,14 +37,14 @@ func main() {
 		AppCleanup()
 		os.Exit(1)
 	}()
-	conf := initialize.Run()
-	boss := boss.New(conf)
+	global.Run()
+	boss := boss.New()
 	boss.Run()
 	// infinite print loop
 	select {}
 
 }
 func AppCleanup() {
-	time.Sleep(time.Millisecond * time.Duration(3000))
+	time.Sleep(time.Millisecond * time.Duration(1000))
 	log.Println("CLEANUP APP BEFORE EXIT!!!")
 }

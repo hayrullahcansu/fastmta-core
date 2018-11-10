@@ -1,19 +1,17 @@
 package boss
 
 import (
-	"../conf"
 	ZMSmtp "../core/smtp"
+	"../global"
 )
 
 type Boss struct {
-	Config      *conf.Config
 	VirtualMtas []*ZMSmtp.VirtualMta
 	InboundMtas []*ZMSmtp.InboundSmtpServer
 }
 
-func New(config *conf.Config) *Boss {
+func New() *Boss {
 	boss := &Boss{
-		Config:      config,
 		VirtualMtas: make([]*ZMSmtp.VirtualMta, 0),
 		InboundMtas: make([]*ZMSmtp.InboundSmtpServer, 0),
 	}
@@ -21,10 +19,10 @@ func New(config *conf.Config) *Boss {
 }
 
 func (boss *Boss) Run() {
-	for _, vmta := range boss.Config.IPAddresses {
+	for _, vmta := range global.StaticConfig.IPAddresses {
 		vm := ZMSmtp.CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound)
 		boss.VirtualMtas = append(boss.VirtualMtas, vm)
-		inboundServer := ZMSmtp.CreateNewInboundSmtpServer(vm, boss.Config)
+		inboundServer := ZMSmtp.CreateNewInboundSmtpServer(vm)
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
 		go inboundServer.Run()
 	}
