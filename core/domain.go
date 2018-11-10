@@ -1,9 +1,9 @@
-package exchange
+package core
 
 import (
 	"net"
 
-	"../../entity"
+	"../entity"
 )
 
 type Domain struct {
@@ -11,15 +11,16 @@ type Domain struct {
 	MXRecords []*net.MX
 }
 
-func NewDomain(name string) *Domain {
+func NewDomain(name string) (*Domain, error) {
 	domain := &Domain{
 		Name: name,
 	}
 	mx, err := net.LookupMX(name)
 	if err == nil {
 		domain.MXRecords = mx
+		return domain, nil
 	}
-	return domain
+	return domain, err
 }
 
 func InitDomain(name string, domain *entity.Domain) *Domain {
