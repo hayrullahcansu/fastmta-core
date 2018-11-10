@@ -3,7 +3,7 @@ package smtp
 import (
 	"net"
 
-	"../../conf"
+	"../../global"
 	"../../queue"
 )
 
@@ -16,8 +16,8 @@ type OutboundSmtpServer struct {
 	RabbitMqClient *queue.RabbitMqClient
 }
 
-func CreateNewOutboundSmtpServer(vmta *VirtualMta, config *conf.Config) *OutboundSmtpServer {
-	client := queue.New(&config.RabbitMq)
+func CreateNewOutboundSmtpServer(vmta *VirtualMta) *OutboundSmtpServer {
+	client := queue.New(global.StaticRabbitMqConfig)
 	client.Connect(true)
 	client.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
 	//que, _ := client.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)

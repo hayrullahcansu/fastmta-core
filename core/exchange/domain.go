@@ -2,27 +2,18 @@ package exchange
 
 import (
 	"net"
-	"sync"
 
 	"../../entity"
-	"../smtp"
-	"github.com/emnl/goods/queue"
 )
 
 type Domain struct {
-	mutex        *sync.Mutex
-	Name         string
-	MXRecords    []*net.MX
-	ParentRouter *Router
-	Messages     *queue.Queue
+	Name      string
+	MXRecords []*net.MX
 }
 
-func NewDomain(name string, router *Router) *Domain {
+func NewDomain(name string) *Domain {
 	domain := &Domain{
-		mutex:        &sync.Mutex{},
-		Name:         name,
-		ParentRouter: router,
-		Messages:     queue.New(),
+		Name: name,
 	}
 	mx, err := net.LookupMX(name)
 	if err == nil {
@@ -31,14 +22,24 @@ func NewDomain(name string, router *Router) *Domain {
 	return domain
 }
 
-func (domain *Domain) Run(outboundClient *smtp.OutboundSmtpServer) {
-	//outboundClient.ConsumeMessage(domain.)
-}
-
-func (domain *Domain) AddMessage(message *entity.Message) {
-	domain.Messages.Enqueue(message)
-}
-
-func (domain *Domain) RemoveFromRouter() {
-
+func InitDomain(name string, domain *entity.Domain) *Domain {
+	domainInstance := &Domain{
+		Name: name,
+	}
+	if domain.MXRecords == nil || len(domain.MXRecords) < 1 {
+		mx, err := net.LookupMX(name)
+		if err == nil {
+			domainInstance.MXRecords = mx
+			//TODO: save db
+		}
+	} else {
+		domainInstance.MXRecords = make([]*net.MX, len(domain.MXRecords))
+		for i, mx := range domain.MXRecords {
+			domainInstance.MXRecords[i] = &net.MX{
+				Host: mx.Host,
+				Pref: mx.Pref,
+			}
+		}
+	}
+	return domainInstance
 }

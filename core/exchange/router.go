@@ -16,6 +16,7 @@ type Router struct {
 }
 
 func NewRouter() *Router {
+
 	return &Router{
 		BulkChannel:    make(chan *entity.Message, 1000),
 		GeneralChannel: make(chan *entity.Message, 500),
