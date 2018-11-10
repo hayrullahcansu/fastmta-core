@@ -1,14 +1,17 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 
 	OS "../cross"
+	"../entity"
 	"../queue"
 )
 
 type InboundConsumer struct {
-	RabbitMqClient *queue.RabbitMqClient
+	RabbitMqClient        *queue.RabbitMqClient
+	MessageProcessChannel chan *entity.Message
 }
 
 func NewInboundConsumer() *InboundConsumer {
@@ -17,7 +20,17 @@ func NewInboundConsumer() *InboundConsumer {
 	}
 }
 
+func (consumer *InboundConsumer) SetChannel(channel chan *entity.Message) {
+	if channel == nil {
+		panic(fmt.Sprintf("MessageChannel can not be nil%s", OS.NewLine))
+	}
+	consumer.MessageProcessChannel = channel
+}
+
 func (consumer *InboundConsumer) Run() {
+	if consumer.MessageProcessChannel == nil {
+		panic(fmt.Sprintf("MessageChannel can not be nil%s", OS.NewLine))
+	}
 	consumer.RabbitMqClient.Connect(true)
 	ch, err := consumer.RabbitMqClient.Consume(queue.InboundStagingQueueName, "", false, false, true, nil)
 	if err != nil {
@@ -27,8 +40,9 @@ func (consumer *InboundConsumer) Run() {
 		select {
 		case msg, ok := <-ch:
 			if ok {
-				//TODO: Process Message Here
-
+				pureMessage := &entity.Message{}
+				json.Unmarshal(msg.Body, pureMessage)
+				consumer.MessageProcessChannel <- pureMessage
 				msg.Ack(false)
 				_ = string(msg.Body)
 			}
