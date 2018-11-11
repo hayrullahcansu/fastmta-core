@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -16,7 +17,21 @@ import (
 
 var ops int64
 
+const (
+	Timeout   = time.Second * time.Duration(30)
+	KeepAlive = time.Second * time.Duration(30)
+	//MtaName       = "ZetaMail"
+	//MaxErrorLimit = 10
+)
+
 func main() {
+
+	conn, err := net.Dial("tcp", "mx.yandex.net:25")
+	if _, ok := err.(*net.OpError).Err.(*net.DNSError); ok {
+
+	}
+	fmt.Println(err)
+	conn.Close()
 	// load command line arguments
 	atomic.AddInt64(&ops, 1)
 	atomic.AddInt64(&ops, -1)
