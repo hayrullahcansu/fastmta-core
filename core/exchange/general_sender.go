@@ -1,8 +1,6 @@
 package exchange
 
 import (
-	"fmt"
-
 	".."
 	"../../entity"
 	"../smtp"
@@ -33,11 +31,12 @@ func (sender *GeneralSender) Run() {
 		select {
 		case msg, ok := <-sender.MessageChannel:
 			if ok {
-				domain, err := core.NewDomain(msg.Host)
+				_, err := core.NewDomain(msg.Host)
 				if err != nil {
 					//TODO: this is bounce domain not found
-					transactionResult := smtp.SendMessage(msg, nil, domain)
-					fmt.Println(transactionResult)
+					_ = smtp.NewOutboundClient()
+					//transactionResult := client.SendMessage(msg, nil, domain)
+					//fmt.Println(transactionResult)
 				}
 
 			}
