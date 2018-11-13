@@ -10,9 +10,15 @@ import (
 )
 
 const (
-	InboundExchange         string = "ex_inbound"
-	OutboundExchange        string = "ex_outbound"
-	InboundStagingQueueName string = "zetamail_inbound_staging"
+	InboundExchange          string = "fastmta_ex_inbound"
+	InboundStagingExchange   string = "fastmta_ex_inbound_staging"
+	OutboundExchange         string = "fastmta_ex_outbound"
+	RoutingKeyInbound        string = "inbound"
+	RoutingKeyInboundStaging string = "inbound_staging"
+	RoutingKeyOutbound       string = "outbound"
+	InboundQueueName         string = "fastmta_inbound"
+	InboundStagingQueueName  string = "fastmta_inbound_staging"
+	OutboundQueueName        string = "fastmta_outbound"
 )
 
 type RabbitMqClient struct {
