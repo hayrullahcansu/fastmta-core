@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type InboundMessageTransaction struct {
+type InboundMessage struct {
 	gorm.Model
 	MessageID          string
 	Headers            map[string]*string
