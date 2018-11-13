@@ -3,15 +3,16 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	OS "../cross"
 	"../entity"
 	"../queue"
+	"github.com/google/uuid"
 )
 
 type InboundConsumer struct {
-	RabbitMqClient        *queue.RabbitMqClient
-	MessageProcessChannel chan *entity.Message
+	RabbitMqClient *queue.RabbitMqClient
 }
 
 func NewInboundConsumer() *InboundConsumer {
@@ -20,31 +21,40 @@ func NewInboundConsumer() *InboundConsumer {
 	}
 }
 
-func (consumer *InboundConsumer) SetChannel(channel chan *entity.Message) {
-	if channel == nil {
-		panic(fmt.Sprintf("MessageChannel can not be nil%s", OS.NewLine))
-	}
-	consumer.MessageProcessChannel = channel
-}
-
 func (consumer *InboundConsumer) Run() {
-	if consumer.MessageProcessChannel == nil {
-		panic(fmt.Sprintf("MessageChannel can not be nil%s", OS.NewLine))
-	}
 	consumer.RabbitMqClient.Connect(true)
-	ch, err := consumer.RabbitMqClient.Consume(queue.InboundStagingQueueName, "", false, false, true, nil)
+	ch, err := consumer.RabbitMqClient.Consume(queue.InboundQueueName, "", false, false, true, nil)
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundStagingQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundQueueName, err, OS.NewLine))
 	}
 	for {
 		select {
-		case msg, ok := <-ch:
+		case inboundMessage, ok := <-ch:
 			if ok {
-				pureMessage := &entity.Message{}
-				json.Unmarshal(msg.Body, pureMessage)
-				consumer.MessageProcessChannel <- pureMessage
-				msg.Ack(false)
-				_ = string(msg.Body)
+				pureMessage := &entity.InboundMessage{}
+				json.Unmarshal(inboundMessage.Body, pureMessage)
+				for i := 0; i < len(pureMessage.RcptTo); i++ {
+					msg := &entity.Message{
+						MessageID: uuid.New().String(),
+						MailFrom:  string(pureMessage.MailFrom),
+						Data:      string(pureMessage.Data),
+						Status:    "w",
+						RcptTo:    string(pureMessage.RcptTo[i]),
+						Host:      string(pureMessage.MailFrom[strings.LastIndex(pureMessage.MailFrom, "@"):]),
+					}
+					data, err := json.Marshal(msg)
+					if err == nil {
+						consumer.RabbitMqClient.Publish(
+							queue.InboundStagingExchange,
+							queue.RoutingKeyInboundStaging,
+							true,
+							true,
+							data,
+						)
+					}
+
+				}
+				inboundMessage.Ack(false)
 			}
 		}
 	}

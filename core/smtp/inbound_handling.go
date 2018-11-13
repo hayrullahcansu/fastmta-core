@@ -29,7 +29,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 	}
 	errorCounter := 0
 	hasHello := false
-	var mtaMessage *entity.InboundMessageTransaction
+	var mtaMessage *entity.InboundMessage
 	for {
 		cmdOrginal, err := ReadAllNoTLS(conn)
 		cmd := strings.ToUpper(cmdOrginal)
@@ -103,7 +103,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 			continue
 		}
 		if strings.HasPrefix(cmd, "MAIL FROM:") {
-			mtaMessage = &entity.InboundMessageTransaction{
+			mtaMessage = &entity.InboundMessage{
 				MessageID: uuid.New().String(),
 				RcptTo:    make([]string, 0),
 				Headers:   make(map[string]*string),
@@ -195,11 +195,11 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 
 }
 
-func AppendMessage(server *InboundSmtpServer, message *entity.InboundMessageTransaction) (bool, error) {
+func AppendMessage(server *InboundSmtpServer, message *entity.InboundMessage) (bool, error) {
 	//TODO: add to exchange and queue
 	data, err := json.Marshal(message)
 	if err == nil {
-		err = server.RabbitMqClient.Publish(queue.InboundExchange, "", false, false, data)
+		err = server.RabbitMqClient.Publish(queue.InboundExchange, queue.RoutingKeyInbound, false, false, data)
 		if err == nil {
 			return true, err
 		}

@@ -37,7 +37,6 @@ func (boss *Boss) Run() {
 	}
 	boss.CacheManager.Init()
 	boss.Router.SetCacheManager(boss.CacheManager)
-	boss.InboundConsumer.SetChannel(boss.Router.MessageChannel)
 	go boss.InboundConsumer.Run()
 
 }
