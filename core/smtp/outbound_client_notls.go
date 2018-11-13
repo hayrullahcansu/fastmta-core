@@ -3,7 +3,6 @@ package smtp
 import (
 	"fmt"
 	"net"
-	"regexp"
 	"strings"
 	"time"
 
@@ -34,11 +33,11 @@ func NewOutboundClient() *OutboundClient {
 	return &OutboundClient{}
 }
 
-func (c *OutboundClient) SendMessage(message *entity.Message, virtualMta *VirtualMta, domain *core.Domain) (transaction.TransactionResult, string) {
+func (c *OutboundClient) SendMessageNoTLS(message *entity.Message, virtualMta *VirtualMta, domain *core.Domain) (transaction.TransactionResult, string) {
 	c.virtualMta = virtualMta
 	c.message = message
 	c.domain = domain
-	ok, r := c.CreateTcpClient()
+	ok, r := c.CreateTcpClientNoTLS()
 	if !ok {
 		return r, "Ip address already in usage"
 	}
@@ -48,7 +47,7 @@ func (c *OutboundClient) SendMessage(message *entity.Message, virtualMta *Virtua
 		c.ExecQuit()
 	}
 
-	ok, r, msg := c.Connect()
+	ok, r, msg := c.ConnectNoTLS()
 	if !ok || r != transaction.Success {
 		return r, msg
 	}
@@ -67,19 +66,19 @@ func (c *OutboundClient) SendMessage(message *entity.Message, virtualMta *Virtua
 	}
 
 	// We have connected, so say helo
-	r = c.ExecHelo()
+	r = c.ExecHeloNoTLS()
 	if r != transaction.Success {
 
 		//TODO: add this rule like "this host not valid or unable to connect"
 		return r, "service not avaliable"
 	}
 
-	r = c.ExecMailFrom(c.message.MailFrom)
+	r = c.ExecMailFromNoTLS(c.message.MailFrom)
 	if r != transaction.Success {
 		return r, "service not avaliable"
 	}
 
-	r = c.ExecRcptTo(c.message.RcptTo)
+	r = c.ExecRcptToNoTLS(c.message.RcptTo)
 	if r != transaction.Success {
 		return r, "service not avaliable"
 	}
@@ -89,7 +88,7 @@ func (c *OutboundClient) SendMessage(message *entity.Message, virtualMta *Virtua
 	if mimeKit {
 		//TODO: add dkim
 	} else {
-		r = c.ExecData(c.message.Data)
+		r = c.ExecDataNoTLS(c.message.Data)
 		if r != transaction.Success {
 			return r, "service not avaliable"
 		}
@@ -97,7 +96,7 @@ func (c *OutboundClient) SendMessage(message *entity.Message, virtualMta *Virtua
 	return transaction.Success, ""
 }
 
-func (client *OutboundClient) CreateTcpClient() (bool, transaction.TransactionResult) {
+func (client *OutboundClient) CreateTcpClientNoTLS() (bool, transaction.TransactionResult) {
 	if client.virtualMta.HandleLock() {
 		client.dialer = &net.Dialer{
 			Timeout:   Timeout,
@@ -115,7 +114,7 @@ func (client *OutboundClient) CreateTcpClient() (bool, transaction.TransactionRe
 	return false, transaction.RetryRequired
 }
 
-func (c *OutboundClient) Connect() (bool, transaction.TransactionResult, string) {
+func (c *OutboundClient) ConnectNoTLS() (bool, transaction.TransactionResult, string) {
 	conn, err := c.dialer.Dial("tcp", fmt.Sprintf("%s:%s", c.domain.MXRecords[0].Host, Port))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -130,7 +129,7 @@ func (c *OutboundClient) Connect() (bool, transaction.TransactionResult, string)
 	return true, transaction.Success, "connected"
 }
 
-func (c *OutboundClient) ExecHelo() transaction.TransactionResult {
+func (c *OutboundClient) ExecHeloNoTLS() transaction.TransactionResult {
 	// We have connected to the MX, Say EHLO.
 	WriteLineNoTLS(c.conn, fmt.Sprintf("EHLO %s", c.virtualMta.VmtaHostName))
 	lines, _ := ReadAllLineNoTLS(c.conn)
@@ -155,7 +154,7 @@ func (c *OutboundClient) ExecHelo() transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecMailFrom(mailFrom string) transaction.TransactionResult {
+func (c *OutboundClient) ExecMailFromNoTLS(mailFrom string) transaction.TransactionResult {
 	err := WriteLineNoTLS(c.conn, fmt.Sprintf("MAIL FROM: <%s>", mailFrom))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -177,7 +176,7 @@ func (c *OutboundClient) ExecMailFrom(mailFrom string) transaction.TransactionRe
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecRcptTo(rcptTo string) transaction.TransactionResult {
+func (c *OutboundClient) ExecRcptToNoTLS(rcptTo string) transaction.TransactionResult {
 	err := WriteLineNoTLS(c.conn, fmt.Sprintf("RCPT TO: <%s>", rcptTo))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -196,7 +195,7 @@ func (c *OutboundClient) ExecRcptTo(rcptTo string) transaction.TransactionResult
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecData(data string) transaction.TransactionResult {
+func (c *OutboundClient) ExecDataNoTLS(data string) transaction.TransactionResult {
 	// Data response or Mail From if pipelining
 	err := WriteLineNoTLS(c.conn, fmt.Sprintf("DATA"))
 	if err != nil {
@@ -253,18 +252,4 @@ func (c *OutboundClient) ExecRset() transaction.TransactionResult {
 
 func (c *OutboundClient) ExecQuit() transaction.TransactionResult {
 	return transaction.RetryRequired
-}
-
-func checkErr(err error) (transaction.TransactionResult, string) {
-	opError, _ := err.(*net.OpError)
-	_, _ = opError.Err.(*net.DNSError)
-	if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-		return transaction.Timeout, "timeout"
-	} else if match, _ := regexp.MatchString(".*lookup.*", err.Error()); match {
-		return transaction.HostNotFound, "host not found"
-	} else if match, _ := regexp.MatchString(".*connection refused.*", err.Error()); match {
-		return transaction.RejectedByRemoteServer, "connection refused"
-	} else {
-		return transaction.ServiceNotAvalible, "service not avaliable"
-	}
 }

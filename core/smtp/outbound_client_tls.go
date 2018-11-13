@@ -37,10 +37,10 @@ func (c *OutboundClient) SendMessageTLS(message *entity.Message, virtualMta *Vir
 
 	if false {
 		//if anyrule blocks to send
-		c.ExecQuit()
+		c.ExecQuitTLS()
 	}
 
-	ok, r, msg := c.Connect()
+	ok, r, msg := c.ConnectTLS()
 	if !ok || r != transaction.Success {
 		return r, msg
 	}
@@ -59,19 +59,19 @@ func (c *OutboundClient) SendMessageTLS(message *entity.Message, virtualMta *Vir
 	}
 
 	// We have connected, so say helo
-	r = c.ExecHelo()
+	r = c.ExecHeloTLS()
 	if r != transaction.Success {
 
 		//TODO: add this rule like "this host not valid or unable to connect"
 		return r, "service not avaliable"
 	}
 
-	r = c.ExecMailFrom(c.message.MailFrom)
+	r = c.ExecMailFromTLS(c.message.MailFrom)
 	if r != transaction.Success {
 		return r, "service not avaliable"
 	}
 
-	r = c.ExecRcptTo(c.message.RcptTo)
+	r = c.ExecRcptToTLS(c.message.RcptTo)
 	if r != transaction.Success {
 		return r, "service not avaliable"
 	}
@@ -81,7 +81,7 @@ func (c *OutboundClient) SendMessageTLS(message *entity.Message, virtualMta *Vir
 	if mimeKit {
 		//TODO: add dkim
 	} else {
-		r = c.ExecData(c.message.Data)
+		r = c.ExecDataTLS(c.message.Data)
 		if r != transaction.Success {
 			return r, "service not avaliable"
 		}
