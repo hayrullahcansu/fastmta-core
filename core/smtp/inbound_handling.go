@@ -177,8 +177,9 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 			if err != nil {
 				//TODO: fix this error
 			}
-			//TODO: AddHeader -> Received
-			mtaMessage.Data = data
+
+			//TODO: Check validity
+			mtaMessage.Data = fmt.Sprintf("Received: by %s;%s%s%s", server.VmtaHostName, OS.NewLine, time.Now().UTC(), OS.NewLine) + data
 
 			ok, err := AppendMessage(server, mtaMessage)
 			if ok {
@@ -196,7 +197,6 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 }
 
 func AppendMessage(server *InboundSmtpServer, message *entity.InboundMessage) (bool, error) {
-	//TODO: add to exchange and queue
 	data, err := json.Marshal(message)
 	if err == nil {
 		err = server.RabbitMqClient.Publish(queue.InboundExchange, queue.RoutingKeyInbound, false, false, data)
