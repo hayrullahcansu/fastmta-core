@@ -25,7 +25,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 	defer conn.Close()
 	err := WriteLineNoTLS(conn, fmt.Sprintf("220 %s ESMTP %s Ready", server.VmtaHostName, MtaName))
 	if err != nil {
-
+		sync.
 	}
 	errorCounter := 0
 	hasHello := false
@@ -56,7 +56,6 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 		}
 		if cmd == "RSET" {
 			_ = WriteLineNoTLS(conn, "250 Ok")
-			//TODO: Reset the mail transaction state. Forget any mail from rcpt to data.
 			mtaMessage = nil
 			continue
 		}
