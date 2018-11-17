@@ -1,19 +1,16 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	OS "../cross"
+	"../entity"
 	"../queue"
 	dkim "github.com/emersion/go-dkim"
 )
-
-var options := &dkim.SignOptions{
-	Domain: "example.org",
-	Selector: "brisbane",
-	Signer: privateKey,
-}
 
 type InboundStagingConsumer struct {
 	RabbitMqClient *queue.RabbitMqClient
@@ -36,9 +33,14 @@ func (consumer *InboundStagingConsumer) Run() {
 		select {
 		case messageDelivery, ok := <-messageChannel:
 			if ok {
-				msg := &entity.Message{}				
+				msg := &entity.Message{}
+				options := &dkim.SignOptions{
+					Domain:   "example.org",
+					Selector: "brisbane",
+					Signer:   privateKey,
+				}
 				r := strings.NewReader(messageDelivery.Body)
-				json.Unmarshal(messageDelivery.Body,msg)
+				json.Unmarshal(messageDelivery.Body, msg)
 				var b bytes.Buffer
 				r := strings.NewReader(msg.Data)
 				if err := dkim.Sign(&b, r, options); err != nil {
@@ -53,9 +55,9 @@ func (consumer *InboundStagingConsumer) Run() {
 					data,
 				)
 
-				if err == nil{
+				if err == nil {
 					messageDelivery.Ack(true)
-				}else {
+				} else {
 					messageChannel.Reject(true)
 				}
 			}
