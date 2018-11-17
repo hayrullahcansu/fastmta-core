@@ -36,8 +36,6 @@ func (consumer *InboundStagingConsumer) Run() {
 		select {
 		case messageDelivery, ok := <-messageChannel:
 			if ok {
-				//TODO: 1.) DKİM
-				//message.Body
 				msg := &entity.Message{}				
 				r := strings.NewReader(messageDelivery.Body)
 				json.Unmarshal(messageDelivery.Body,msg)
