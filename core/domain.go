@@ -9,6 +9,7 @@ import (
 type Domain struct {
 	Name      string
 	MXRecords []*net.MX
+	Dkimmer   entity.Dkimmer
 }
 
 func NewDomain(name string) (*Domain, error) {
