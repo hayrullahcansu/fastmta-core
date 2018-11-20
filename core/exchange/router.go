@@ -3,8 +3,8 @@ package exchange
 import (
 	"fmt"
 
+	"../../caching"
 	"../../entity"
-	"../caching"
 	"../smtp"
 )
 

@@ -1,8 +1,8 @@
 package boss
 
 import (
+	"../caching"
 	"../core"
-	"../core/caching"
 	"../core/exchange"
 	ZMSmtp "../core/smtp"
 	"../global"
