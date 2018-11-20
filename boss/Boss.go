@@ -9,20 +9,20 @@ import (
 )
 
 type Boss struct {
-	VirtualMtas     []*ZMSmtp.VirtualMta
-	InboundMtas     []*ZMSmtp.InboundSmtpServer
-	InboundConsumer *core.InboundConsumer
-	Router          *exchange.Router
-	CacheManager    *caching.CacheManager
+	VirtualMtas        []*ZMSmtp.VirtualMta
+	InboundMtas        []*ZMSmtp.InboundSmtpServer
+	InboundConsumer    *core.InboundConsumer
+	Router             *exchange.Router
+	DomainCacheManager *caching.CacheManager
 }
 
 func New() *Boss {
 	boss := &Boss{
-		VirtualMtas:     make([]*ZMSmtp.VirtualMta, 0),
-		InboundMtas:     make([]*ZMSmtp.InboundSmtpServer, 0),
-		InboundConsumer: core.NewInboundConsumer(),
-		CacheManager:    caching.NewCacheManager(),
-		Router:          exchange.NewRouter(),
+		VirtualMtas:        make([]*ZMSmtp.VirtualMta, 0),
+		InboundMtas:        make([]*ZMSmtp.InboundSmtpServer, 0),
+		InboundConsumer:    core.NewInboundConsumer(),
+		DomainCacheManager: caching.NewCacheManager(),
+		Router:             exchange.NewRouter(),
 	}
 	return boss
 }
@@ -35,8 +35,8 @@ func (boss *Boss) Run() {
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
 		go inboundServer.Run()
 	}
-	boss.CacheManager.Init()
-	boss.Router.SetCacheManager(boss.CacheManager)
+	boss.DomainCacheManager.Init()
+	boss.Router.SetDomainCacheManager(boss.DomainCacheManager)
 	go boss.InboundConsumer.Run()
 
 }

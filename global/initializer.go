@@ -2,9 +2,14 @@ package global
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"../conf"
+	OS "../cross"
 	"../entity"
 )
 
@@ -17,6 +22,8 @@ func Run() {
 	StaticConfig = &config
 	StaticRabbitMqConfig = &config.RabbitMq
 	dbEnsureCreated()
+	loadCache()
+
 }
 
 func readConfigFromFile() string {
@@ -45,4 +52,23 @@ func dbEnsureCreated() {
 		},
 	})
 	db.Close()
+}
+
+func loadCache() {
+	DomainCaches = cache.New(5*time.Minute, 10*time.Minute)
+	db, err := entity.GetDbContext()
+	if err != nil {
+		panic(fmt.Sprintf("Db cant open. %s%s", err, OS.NewLine))
+	}
+	var domains []entity.Domain
+	var count int
+	var currentPage int = 0
+	var limit int = 50000
+	db.Model(&entity.Domain{}).Count(&count)
+	for currentPage < count/limit+1 {
+		if db.Offset(limit*currentPage).Limit(limit).Model(&entity.Domain).Find(&domains).Error == nil {
+			//TODO: burada kaldın foreach loop domains and add to cache
+		}
+		currentPage++
+	}
 }
