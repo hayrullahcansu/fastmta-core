@@ -9,4 +9,5 @@ var (
 	StaticRabbitMqConfig *conf.RabbitMqConfig
 	StaticConfig         *conf.Config
 	DomainCaches         *cache.Cache
+	DkimCaches           *cache.Cache
 )
