@@ -13,7 +13,6 @@ type Boss struct {
 	InboundMtas        []*ZMSmtp.InboundSmtpServer
 	InboundConsumer    *core.InboundConsumer
 	Router             *exchange.Router
-	DomainCacheManager *caching.CacheManager
 }
 
 func New() *Boss {
@@ -21,7 +20,6 @@ func New() *Boss {
 		VirtualMtas:        make([]*ZMSmtp.VirtualMta, 0),
 		InboundMtas:        make([]*ZMSmtp.InboundSmtpServer, 0),
 		InboundConsumer:    core.NewInboundConsumer(),
-		DomainCacheManager: caching.NewCacheManager(),
 		Router:             exchange.NewRouter(),
 	}
 	return boss
@@ -35,7 +33,7 @@ func (boss *Boss) Run() {
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
 		go inboundServer.Run()
 	}
-	boss.DomainCacheManager.Init()
+	
 	boss.Router.SetDomainCacheManager(boss.DomainCacheManager)
 	go boss.InboundConsumer.Run()
 
