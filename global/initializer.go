@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -13,7 +17,10 @@ import (
 	"../entity"
 )
 
-const confFileName = "app.json"
+const (
+	confFileName   = "app.json"
+	dkimFolderPath = "dkim"
+)
 
 func Run() {
 	confText := readConfigFromFile()
@@ -96,6 +103,45 @@ func loadDkimCache() {
 		}
 		currentPage++
 	}
+	dkimmers = nil
+	filepath.Walk(dkimFolderPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		if info.IsDir() {
+			fmt.Printf("skipping a dir without errors: %+v \n", info.Name())
+			return filepath.SkipDir
+		}
+		data, err := readFile(path)
+		if err != nil {
+			return err
+		}
+		dataString := string(data)
+		r := regexp.MustCompile(`(?P<Selector>\w)##(?P<Domain>\w).pem`)
+		resultSet := r.FindStringSubmatch(dataString)
+		if resultSet != nil {
+			dkimmer := &entity.Dkimmer{
+				DomainName: resultSet[2],
+				Selector:   resultSet[1],
+				PrivateKey: dataString,
+				Enabled:    true,
+			}
+			DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+		}
+		return nil
+	})
 
 	//TODO: burada kaldın. GetDkims from folder then push cache
+}
+func readFile(filePath string) ([]byte, error) {
+	f, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		log.Fatalf("open file error: %v", err)
+		return nil, err
+	}
+	defer f.Close()
+
+	return ioutil.ReadAll(f)
+
 }
