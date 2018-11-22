@@ -50,6 +50,7 @@ func GetDbContext() (*gorm.DB, error) {
 			&Transaction{},
 			&Domain{},
 			&MXRecord{},
+			&Dkimmer{},
 		)
 		fmt.Println("migration done")
 	})

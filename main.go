@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -25,13 +24,6 @@ const (
 )
 
 func main() {
-
-	conn, err := net.Dial("tcp", "mx.yandex.net:25")
-	if _, ok := err.(*net.OpError).Err.(*net.DNSError); ok {
-
-	}
-	fmt.Println(err)
-	conn.Close()
 	// load command line arguments
 	atomic.AddInt64(&ops, 1)
 	atomic.AddInt64(&ops, -1)
