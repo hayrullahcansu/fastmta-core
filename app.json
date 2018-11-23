@@ -6,18 +6,6 @@
             "hostname":"vmta1.localhost",
             "inbound":true,
             "outbound":true
-        },
-        {
-            "ip":"192.168.1.10",
-            "hostname":"vmta2.localhost",
-            "inbound":true,
-            "outbound":true
-        },
-        {
-            "ip":"192.168.1.11",
-            "hostname":"vmta3.localhost",
-            "inbound":true,
-            "outbound":true
         }
     ],
     "rabbitmq":{

@@ -8,18 +8,20 @@ import (
 )
 
 type Boss struct {
-	VirtualMtas     []*ZMSmtp.VirtualMta
-	InboundMtas     []*ZMSmtp.InboundSmtpServer
-	InboundConsumer *core.InboundConsumer
-	Router          *exchange.Router
+	VirtualMtas            []*ZMSmtp.VirtualMta
+	InboundMtas            []*ZMSmtp.InboundSmtpServer
+	InboundConsumer        *core.InboundConsumer
+	InboundStagingConsumer *core.InboundStagingConsumer
+	Router                 *exchange.Router
 }
 
 func New() *Boss {
 	boss := &Boss{
-		VirtualMtas:     make([]*ZMSmtp.VirtualMta, 0),
-		InboundMtas:     make([]*ZMSmtp.InboundSmtpServer, 0),
-		InboundConsumer: core.NewInboundConsumer(),
-		Router:          exchange.NewRouter(),
+		VirtualMtas:            make([]*ZMSmtp.VirtualMta, 0),
+		InboundMtas:            make([]*ZMSmtp.InboundSmtpServer, 0),
+		InboundConsumer:        core.NewInboundConsumer(),
+		InboundStagingConsumer: core.NewInboundStagingConsumer(),
+		Router:                 exchange.NewRouter(),
 	}
 	return boss
 }
@@ -34,5 +36,6 @@ func (boss *Boss) Run() {
 	}
 
 	go boss.InboundConsumer.Run()
+	go boss.InboundStagingConsumer.Run()
 
 }
