@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 
+	OS "../../cross"
+	"../../logger"
 	"../../queue"
 )
 
@@ -40,7 +42,7 @@ func (smtpServer *InboundSmtpServer) Run() {
 		panic(fmt.Sprintf("%s Can't listen inbound %s", mergedAddress, err))
 		//LOG
 	}
-	fmt.Printf("%s Listening", mergedAddress)
+	logger.Info.Printf("%s Listening%s", mergedAddress, OS.NewLine)
 	defer listener.Close()
 
 	for {

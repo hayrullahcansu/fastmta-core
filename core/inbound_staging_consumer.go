@@ -11,6 +11,7 @@ import (
 
 	OS "../cross"
 	"../entity"
+	"../global"
 	"../queue"
 	dkim "github.com/emersion/go-dkim"
 )
@@ -67,18 +68,19 @@ func (consumer *InboundStagingConsumer) Run() {
 		case messageDelivery, ok := <-messageChannel:
 			if ok {
 				msg := &entity.Message{}
-				options := &dkim.SignOptions{
-					Domain:   "example.org",
-					Selector: "brisbane",
-					Signer:   testPrivateKey,
-				}
 				json.Unmarshal(messageDelivery.Body, msg)
-				var b bytes.Buffer
-				r := strings.NewReader(msg.Data)
-				if err := dkim.Sign(&b, r, options); err != nil {
-					//TODO: fix or report dkim error
+				d, ok := global.DkimCaches.Get(msg.Host)
+				if ok {
+					dkimmer, ok := d.(entity.Dkimmer)
+					if ok {
+						var b bytes.Buffer
+						r := strings.NewReader(msg.Data)
+						if err := dkim.Sign(&b, r, dkimmer.Options); err != nil {
+							//TODO: fix or report dkim error
+						}
+						msg.Data = string(b.Bytes())
+					}
 				}
-				msg.Data = string(b.Bytes())
 				data, err := json.Marshal(msg)
 				err = consumer.RabbitMqClient.Publish(
 					queue.OutboundExchange,
@@ -94,6 +96,7 @@ func (consumer *InboundStagingConsumer) Run() {
 					messageDelivery.Reject(true)
 				}
 			}
+
 		}
 	}
 }
