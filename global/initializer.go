@@ -1,20 +1,22 @@
 package global
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 
-	"github.com/patrickmn/go-cache"
-
 	"../conf"
 	OS "../cross"
 	"../entity"
+	"../logger"
+	"github.com/emersion/go-dkim"
+	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -23,6 +25,8 @@ const (
 )
 
 func Run() {
+	logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+
 	confText := readConfigFromFile()
 	config := conf.Config{}
 	json.Unmarshal([]byte(confText), &config)
@@ -98,7 +102,12 @@ func loadDkimCache() {
 	for currentPage < count/limit+1 {
 		if db.Offset(limit*currentPage).Limit(limit).Model(&entity.Dkimmer{}).Find(&dkimmers).Error == nil {
 			for _, dkimmer := range dkimmers {
-				DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+
+				options, err := getDkimOption(dkimmer.DomainName, dkimmer.Selector, dkimmer.PrivateKey)
+				if err == nil {
+					dkimmer.Options = options
+					DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+				}
 			}
 		}
 		currentPage++
@@ -127,6 +136,11 @@ func loadDkimCache() {
 				PrivateKey: dataString,
 				Enabled:    true,
 			}
+			options, err := getDkimOption(dkimmer.DomainName, dkimmer.Selector, dkimmer.PrivateKey)
+			if err == nil {
+				dkimmer.Options = options
+				DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+			}
 			DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
 		}
 		return nil
@@ -137,11 +151,25 @@ func loadDkimCache() {
 func readFile(filePath string) ([]byte, error) {
 	f, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		log.Fatalf("open file error: %v", err)
+		//log.Fatalf("open file error: %v", err)
 		return nil, err
 	}
 	defer f.Close()
 
 	return ioutil.ReadAll(f)
 
+}
+
+func getDkimOption(domain string, selector string, privateKey string) (*dkim.SignOptions, error) {
+	block, _ := pem.Decode([]byte(privateKey))
+	signer, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err == nil {
+		options := &dkim.SignOptions{
+			Domain:   domain,
+			Selector: selector,
+			Signer:   signer,
+		}
+		return options, nil
+	}
+	return nil, err
 }
