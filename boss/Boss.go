@@ -2,27 +2,28 @@ package boss
 
 import (
 	"../core"
-	"../core/caching"
 	"../core/exchange"
 	ZMSmtp "../core/smtp"
 	"../global"
 )
 
 type Boss struct {
-	VirtualMtas     []*ZMSmtp.VirtualMta
-	InboundMtas     []*ZMSmtp.InboundSmtpServer
-	InboundConsumer *core.InboundConsumer
-	Router          *exchange.Router
-	CacheManager    *caching.CacheManager
+	VirtualMtas            []*ZMSmtp.VirtualMta
+	InboundMtas            []*ZMSmtp.InboundSmtpServer
+	InboundConsumer        *core.InboundConsumer
+	InboundStagingConsumer *core.InboundStagingConsumer
+	OutboundConsumer       *core.OutboundConsumer
+	Router                 *exchange.Router
 }
 
 func New() *Boss {
 	boss := &Boss{
-		VirtualMtas:     make([]*ZMSmtp.VirtualMta, 0),
-		InboundMtas:     make([]*ZMSmtp.InboundSmtpServer, 0),
-		InboundConsumer: core.NewInboundConsumer(),
-		CacheManager:    caching.NewCacheManager(),
-		Router:          exchange.NewRouter(),
+		VirtualMtas:            make([]*ZMSmtp.VirtualMta, 0),
+		InboundMtas:            make([]*ZMSmtp.InboundSmtpServer, 0),
+		InboundConsumer:        core.NewInboundConsumer(),
+		InboundStagingConsumer: core.NewInboundStagingConsumer(),
+		OutboundConsumer:       core.NewOutboundConsumer(),
+		Router:                 exchange.NewRouter(),
 	}
 	return boss
 }
@@ -35,8 +36,9 @@ func (boss *Boss) Run() {
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
 		go inboundServer.Run()
 	}
-	boss.CacheManager.Init()
-	boss.Router.SetCacheManager(boss.CacheManager)
+
 	go boss.InboundConsumer.Run()
+	go boss.InboundStagingConsumer.Run()
+	go boss.OutboundConsumer.Run()
 
 }

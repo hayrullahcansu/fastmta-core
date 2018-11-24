@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -12,7 +11,9 @@ import (
 	"sync/atomic"
 
 	"./boss"
+	OS "./cross"
 	"./global"
+	"./logger"
 )
 
 var ops int64
@@ -25,20 +26,13 @@ const (
 )
 
 func main() {
-
-	conn, err := net.Dial("tcp", "mx.yandex.net:25")
-	if _, ok := err.(*net.OpError).Err.(*net.DNSError); ok {
-
-	}
-	fmt.Println(err)
-	conn.Close()
 	// load command line arguments
 	atomic.AddInt64(&ops, 1)
 	atomic.AddInt64(&ops, -1)
 	fmt.Println(atomic.LoadInt64(&ops))
-	name := flag.String("name", "world", "name to print")
+	name := flag.String("name", "FastMta", "name to print")
 	flag.Parse()
-	log.Printf("Starting sleepservice for %s", *name)
+	log.Printf("Starting service for %s%s", *name, OS.NewLine)
 	// setup signal catching
 	sigs := make(chan os.Signal, 1)
 	// catch all signals since not explicitly listing
@@ -48,7 +42,7 @@ func main() {
 
 	go func() {
 		s := <-sigs
-		log.Printf("RECEIVED SIGNAL: %s", s)
+		logger.Info.Printf("RECEIVED SIGNAL: %s%s", s, OS.NewLine)
 		AppCleanup()
 		os.Exit(1)
 	}()
@@ -61,5 +55,5 @@ func main() {
 }
 func AppCleanup() {
 	time.Sleep(time.Millisecond * time.Duration(1000))
-	log.Println("CLEANUP APP BEFORE EXIT!!!")
+	logger.Info.Println("CLEANUP APP BEFORE EXIT!!!")
 }

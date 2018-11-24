@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"../../entity"
-	"../caching"
 	"../smtp"
 )
 
@@ -14,7 +13,6 @@ type Router struct {
 	MessageChannel         chan *entity.Message
 	StopChannel            chan bool
 	OutboundVirtualMtaPool []*smtp.VirtualMta
-	CacheManager           *caching.CacheManager
 }
 
 func NewRouter() *Router {
@@ -45,10 +43,6 @@ func (router *Router) Run() {
 	go router.progressBulkMessage()
 	go router.progressGeneralMessage()
 
-}
-
-func (router *Router) SetCacheManager(cacheManager *caching.CacheManager) {
-	router.CacheManager = cacheManager
 }
 
 func (router *Router) RelayMessage(message *entity.Message) {
