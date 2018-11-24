@@ -12,6 +12,7 @@ type Boss struct {
 	InboundMtas            []*ZMSmtp.InboundSmtpServer
 	InboundConsumer        *core.InboundConsumer
 	InboundStagingConsumer *core.InboundStagingConsumer
+	OutboundConsumer       *core.OutboundConsumer
 	Router                 *exchange.Router
 }
 
@@ -21,6 +22,7 @@ func New() *Boss {
 		InboundMtas:            make([]*ZMSmtp.InboundSmtpServer, 0),
 		InboundConsumer:        core.NewInboundConsumer(),
 		InboundStagingConsumer: core.NewInboundStagingConsumer(),
+		OutboundConsumer:       core.NewOutboundConsumer(),
 		Router:                 exchange.NewRouter(),
 	}
 	return boss
@@ -37,5 +39,6 @@ func (boss *Boss) Run() {
 
 	go boss.InboundConsumer.Run()
 	go boss.InboundStagingConsumer.Run()
+	go boss.OutboundConsumer.Run()
 
 }
