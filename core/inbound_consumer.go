@@ -7,6 +7,7 @@ import (
 
 	OS "../cross"
 	"../entity"
+	"../logger"
 	"../queue"
 	"github.com/google/uuid"
 )
@@ -33,6 +34,7 @@ func (consumer *InboundConsumer) Run() {
 			if ok {
 				pureMessage := &entity.InboundMessage{}
 				json.Unmarshal(inboundMessage.Body, pureMessage)
+				logger.Info.Printf("Recieved message From %s", queue.InboundQueueName)
 				for i := 0; i < len(pureMessage.RcptTo); i++ {
 					msg := &entity.Message{
 						MessageID: uuid.New().String(),
@@ -47,8 +49,8 @@ func (consumer *InboundConsumer) Run() {
 						consumer.RabbitMqClient.Publish(
 							queue.InboundStagingExchange,
 							queue.RoutingKeyInboundStaging,
-							true,
-							true,
+							false,
+							false,
 							data,
 						)
 					}

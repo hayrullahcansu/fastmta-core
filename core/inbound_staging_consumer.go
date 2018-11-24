@@ -12,6 +12,7 @@ import (
 	OS "../cross"
 	"../entity"
 	"../global"
+	"../logger"
 	"../queue"
 	dkim "github.com/emersion/go-dkim"
 )
@@ -60,7 +61,7 @@ func (consumer *InboundStagingConsumer) Run() {
 	consumer.RabbitMqClient.Connect(true)
 	consumer.RabbitMqClient.ExchangeDeclare(queue.InboundStagingExchange, true, false, false, false, nil)
 	que, _ := consumer.RabbitMqClient.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
-	consumer.RabbitMqClient.QueueBind(que.Name, queue.InboundStagingExchange, queue.RoutingKeyInbound, false, nil)
+	consumer.RabbitMqClient.QueueBind(que.Name, queue.InboundStagingExchange, queue.RoutingKeyInboundStaging, false, nil)
 	messageChannel, err := consumer.RabbitMqClient.Consume(queue.InboundStagingQueueName, "", false, false, true, nil)
 	if err != nil {
 		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundStagingQueueName, err, OS.NewLine))
@@ -72,6 +73,7 @@ func (consumer *InboundStagingConsumer) Run() {
 			if ok {
 				msg := &entity.Message{}
 				json.Unmarshal(messageDelivery.Body, msg)
+				logger.Info.Printf("Recieved message From %s", queue.InboundStagingQueueName)
 				d, ok := global.DkimCaches.Get(msg.Host)
 				if ok {
 					dkimmer, ok := d.(entity.Dkimmer)
