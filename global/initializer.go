@@ -145,8 +145,6 @@ func loadDkimCache() {
 		}
 		return nil
 	})
-
-	//TODO: burada kaldın. GetDkims from folder then push cache
 }
 func readFile(filePath string) ([]byte, error) {
 	f, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)

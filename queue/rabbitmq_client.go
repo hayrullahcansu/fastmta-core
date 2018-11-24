@@ -72,12 +72,14 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 					client.IsConnected = false
 					client.MakeSureConnection = false
 					fmt.Printf("RabbitMqClient error handled: %s%s", err, OS.NewLine)
-					//defer client.Connect(true)
+					defer client.Connect(true)
 					break
-				case message := <-notifyReturn:
-					err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
-					if err != nil {
-						fmt.Printf("RabbitMqClient returned Message cant publish: %s%s", err, OS.NewLine)
+				case message, ok := <-notifyReturn:
+					if ok && client.IsConnected {
+						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
+						if err != nil {
+							fmt.Printf("RabbitMqClient returned Message cant publish: %s%s", err, OS.NewLine)
+						}
 					}
 				}
 			}

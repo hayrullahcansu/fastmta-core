@@ -44,7 +44,6 @@ func (smtpServer *InboundSmtpServer) Run() {
 	}
 	logger.Info.Printf("%s Listening%s", mergedAddress, OS.NewLine)
 	defer listener.Close()
-
 	for {
 		// Listen for an incoming connection.
 		conn, err := listener.Accept()
