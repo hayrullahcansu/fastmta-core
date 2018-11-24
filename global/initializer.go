@@ -34,6 +34,7 @@ func Run() {
 	StaticRabbitMqConfig = &config.RabbitMq
 	dbEnsureCreated()
 	go loadDomainCache()
+	go loadDkimCache()
 
 }
 
