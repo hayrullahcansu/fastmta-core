@@ -7,6 +7,10 @@ import (
 	"../smtp"
 )
 
+var (
+	RouterInstance Router
+)
+
 type Router struct {
 	BulkChannel            chan *entity.Message
 	GeneralChannel         chan *entity.Message
@@ -23,6 +27,10 @@ func NewRouter() *Router {
 		MessageChannel: make(chan *entity.Message, 1000),
 		StopChannel:    make(chan bool),
 	}
+}
+
+func (router *Router) Init(virtualMtas *[]*smtp.VirtualMta) {
+	router.OutboundVirtualMtaPool = *virtualMtas
 }
 
 func (router *Router) Run() {

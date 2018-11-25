@@ -14,6 +14,7 @@ import (
 	"../conf"
 	OS "../cross"
 	"../entity"
+
 	"../logger"
 	"github.com/emersion/go-dkim"
 	"github.com/patrickmn/go-cache"
@@ -33,6 +34,7 @@ func Run() {
 	StaticConfig = &config
 	StaticRabbitMqConfig = &config.RabbitMq
 	dbEnsureCreated()
+	//TODO: get instance and intialize
 	go loadDomainCache()
 	go loadDkimCache()
 
