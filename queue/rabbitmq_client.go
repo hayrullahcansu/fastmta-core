@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	InboundExchange          string = "fastmta_ex_inbound"
-	InboundStagingExchange   string = "fastmta_ex_inbound_staging"
-	OutboundExchange         string = "fastmta_ex_outbound"
-	RoutingKeyInbound        string = "inbound"
-	RoutingKeyInboundStaging string = "inbound_staging"
-	RoutingKeyOutbound       string = "outbound"
-	InboundQueueName         string = "fastmta_inbound"
-	InboundStagingQueueName  string = "fastmta_inbound_staging"
-	OutboundQueueName        string = "fastmta_outbound"
+	InboundExchange                  string = "fastmta_ex_inbound"
+	InboundStagingExchange           string = "fastmta_ex_inbound_staging"
+	OutboundExchange                 string = "fastmta_ex_outbound"
+	RoutingKeyInbound                string = "inbound"
+	RoutingKeyInboundStaging         string = "inbound_staging"
+	RoutingKeyOutboundMultipleSender string = "outbound_multiple_sender"
+	RoutingKeyOutboundNormal         string = "outbound"
+	InboundQueueName                 string = "fastmta_inbound"
+	InboundStagingQueueName          string = "fastmta_inbound_staging"
+	OutboundMultipleSenderQueueName  string = "fastmta_outbound_multiple_sender"
+	OutboundNormalQueueName          string = "fastmta_outbound_normal"
 )
 
 type RabbitMqClient struct {

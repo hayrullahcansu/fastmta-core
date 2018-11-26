@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"time"
 
+	"../caching"
 	"../conf"
 	OS "../cross"
 	"../entity"
@@ -69,7 +69,7 @@ func dbEnsureCreated() {
 }
 
 func loadDomainCache() {
-	DomainCaches = cache.New(5*time.Minute, 10*time.Minute)
+	domainCacher := caching.InstanceDomain()
 	db, err := entity.GetDbContext()
 	if err != nil {
 		panic(fmt.Sprintf("Db cant open. %s%s", err, OS.NewLine))
@@ -83,7 +83,7 @@ func loadDomainCache() {
 	for currentPage < count/limit+1 {
 		if db.Offset(limit*currentPage).Limit(limit).Model(&entity.Domain{}).Find(&domains).Error == nil {
 			for _, domain := range domains {
-				DomainCaches.Add(domain.DomainName, domain, cache.NoExpiration)
+				domainCacher.C.Add(domain.DomainName, domain, cache.NoExpiration)
 			}
 		}
 		currentPage++
@@ -91,7 +91,7 @@ func loadDomainCache() {
 }
 
 func loadDkimCache() {
-	DkimCaches = cache.New(5*time.Minute, 10*time.Minute)
+	dkimCacher := caching.InstanceDkim()
 	db, err := entity.GetDbContext()
 	if err != nil {
 		panic(fmt.Sprintf("Db cant open. %s%s", err, OS.NewLine))
@@ -109,7 +109,7 @@ func loadDkimCache() {
 				options, err := getDkimOption(dkimmer.DomainName, dkimmer.Selector, dkimmer.PrivateKey)
 				if err == nil {
 					dkimmer.Options = options
-					DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+					dkimCacher.C.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
 				}
 			}
 		}
@@ -142,9 +142,9 @@ func loadDkimCache() {
 			options, err := getDkimOption(dkimmer.DomainName, dkimmer.Selector, dkimmer.PrivateKey)
 			if err == nil {
 				dkimmer.Options = options
-				DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+				dkimCacher.C.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
 			}
-			DkimCaches.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
+			dkimCacher.C.Add(dkimmer.DomainName, dkimmer, cache.NoExpiration)
 		}
 		return nil
 	})

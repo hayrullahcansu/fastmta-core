@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"fmt"
+	"sync"
 
 	"../../entity"
 	"../smtp"
@@ -19,7 +20,17 @@ type Router struct {
 	OutboundVirtualMtaPool []*smtp.VirtualMta
 }
 
-func NewRouter() *Router {
+var instanceRouter *Router
+var once sync.Once
+
+func InstanceRouter() *Router {
+	once.Do(func() {
+		instanceRouter = newRouter()
+	})
+	return instanceRouter
+}
+
+func newRouter() *Router {
 
 	return &Router{
 		BulkChannel:    make(chan *entity.Message, 1000),
