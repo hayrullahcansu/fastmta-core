@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strings"
 
+	"../caching"
 	OS "../cross"
 	"../entity"
-	"../global"
 	"../logger"
 	"../queue"
 	dkim "github.com/emersion/go-dkim"
@@ -74,7 +74,7 @@ func (consumer *InboundStagingConsumer) Run() {
 				msg := &entity.Message{}
 				json.Unmarshal(messageDelivery.Body, msg)
 				logger.Info.Printf("Recieved message From %s", queue.InboundStagingQueueName)
-				d, ok := global.DkimCaches.Get(msg.Host)
+				d, ok := caching.InstanceDkim().C.Get(msg.Host)
 				if ok {
 					dkimmer, ok := d.(entity.Dkimmer)
 					if ok {
@@ -87,13 +87,23 @@ func (consumer *InboundStagingConsumer) Run() {
 					}
 				}
 				data, err := json.Marshal(msg)
-				err = consumer.RabbitMqClient.Publish(
-					queue.OutboundExchange,
-					queue.RoutingKeyOutbound,
-					false,
-					false,
-					data,
-				)
+				if true {
+					err = consumer.RabbitMqClient.Publish(
+						queue.OutboundExchange,
+						queue.RoutingKeyOutboundMultipleSender,
+						false,
+						false,
+						data,
+					)
+				} else {
+					err = consumer.RabbitMqClient.Publish(
+						queue.OutboundExchange,
+						queue.RoutingKeyOutboundNormal,
+						false,
+						false,
+						data,
+					)
+				}
 
 				if err == nil {
 					messageDelivery.Ack(true)

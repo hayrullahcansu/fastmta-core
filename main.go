@@ -2,13 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"time"
-
-	"sync/atomic"
 
 	"./boss"
 	OS "./cross"
@@ -27,9 +24,6 @@ const (
 
 func main() {
 	// load command line arguments
-	atomic.AddInt64(&ops, 1)
-	atomic.AddInt64(&ops, -1)
-	fmt.Println(atomic.LoadInt64(&ops))
 	name := flag.String("name", "FastMta", "name to print")
 	flag.Parse()
 	log.Printf("Starting service for %s%s", *name, OS.NewLine)
