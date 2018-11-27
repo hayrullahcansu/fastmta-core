@@ -1,11 +1,10 @@
-package exchange
+package smtp
 
 import (
 	"fmt"
 	"sync"
 
 	"../../entity"
-	"../smtp"
 )
 
 var (
@@ -17,7 +16,7 @@ type Router struct {
 	GeneralChannel         chan *entity.Message
 	MessageChannel         chan *entity.Message
 	StopChannel            chan bool
-	OutboundVirtualMtaPool []*smtp.VirtualMta
+	OutboundVirtualMtaPool []*VirtualMta
 }
 
 var instanceRouter *Router
@@ -40,7 +39,7 @@ func newRouter() *Router {
 	}
 }
 
-func (router *Router) Init(virtualMtas *[]*smtp.VirtualMta) {
+func (router *Router) Init(virtualMtas *[]*VirtualMta) {
 	router.OutboundVirtualMtaPool = *virtualMtas
 }
 
@@ -114,7 +113,7 @@ func (router *Router) progressGeneralMessage() {
 	}
 }
 
-func (router *Router) GetVirtualMta() (*smtp.VirtualMta, bool) {
+func (router *Router) GetVirtualMta() (*VirtualMta, bool) {
 	for _, value := range router.OutboundVirtualMtaPool {
 		if !value.IsInUsage() {
 			return value, true

@@ -1,32 +1,31 @@
-package exchange
+package smtp
 
 import (
 	".."
 	"../../entity"
-	"../smtp"
 )
 
-type GeneralSender struct {
+type NormalSender struct {
 	MessageChannel chan *entity.Message
 	ParentRouter   *Router
-	virtualMta     *smtp.VirtualMta
+	virtualMta     *VirtualMta
 }
 
-func NewGeneralSender(router *Router) *GeneralSender {
-	return &GeneralSender{
+func NewGeneralSender(router *Router) *NormalSender {
+	return &NormalSender{
 		MessageChannel: make(chan *entity.Message, 100),
 		ParentRouter:   router,
 	}
 }
 
-func (sender *GeneralSender) AssignVirtualMta() {
+func (sender *NormalSender) AssignVirtualMta() {
 	mta, ok := sender.ParentRouter.GetVirtualMta()
 	if ok {
 		sender.virtualMta = mta
 	}
 }
 
-func (sender *GeneralSender) Run() {
+func (sender *NormalSender) Run() {
 	for {
 		select {
 		case msg, ok := <-sender.MessageChannel:
@@ -34,7 +33,7 @@ func (sender *GeneralSender) Run() {
 				_, err := core.NewDomain(msg.Host)
 				if err != nil {
 					//TODO: this is bounce domain not found
-					_ = smtp.NewOutboundClient()
+					_ = NewOutboundClient()
 					//transactionResult := client.SendMessage(msg, nil, domain)
 					//fmt.Println(transactionResult)
 				}

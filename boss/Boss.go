@@ -2,7 +2,6 @@ package boss
 
 import (
 	"../core"
-	"../core/exchange"
 	ZMSmtp "../core/smtp"
 	"../global"
 )
@@ -14,7 +13,7 @@ type Boss struct {
 	InboundStagingConsumer   *core.InboundStagingConsumer
 	OutboundConsumerMultiple *core.OutboundConsumerMultipleSender
 	OutboundConsumerNormal   *core.OutboundConsumerNormalSender
-	Router                   *exchange.Router
+	Router                   *ZMSmtp.Router
 }
 
 func New() *Boss {
@@ -25,7 +24,7 @@ func New() *Boss {
 		InboundConsumer:        core.NewInboundConsumer(),
 		InboundStagingConsumer: core.NewInboundStagingConsumer(),
 		OutboundConsumerNormal: core.NewOutboundConsumerNormalSender(),
-		Router:                 exchange.InstanceRouter(),
+		Router:                 ZMSmtp.InstanceRouter(),
 	}
 	return boss
 }
