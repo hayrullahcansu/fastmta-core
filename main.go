@@ -24,6 +24,14 @@ const (
 
 func main() {
 	// load command line arguments
+	start := time.Now()
+
+	//m := &sync.Mutex{}
+
+	//runtime.Goexit()
+	elapsed := time.Since(start)
+	log.Printf("Binomial took %s", elapsed)
+
 	name := flag.String("name", "FastMta", "name to print")
 	flag.Parse()
 	log.Printf("Starting service for %s%s", *name, OS.NewLine)
