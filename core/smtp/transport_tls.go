@@ -9,10 +9,10 @@ import (
 	OS "../../cross"
 )
 
-func ReadDataTLS(conn tls.Conn) (string, error) {
+func ReadDataTLS(conn *tls.Conn) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(ReadDeadLine))
 	var builder strings.Builder
-	reader := bufio.NewReader(&conn)
+	reader := bufio.NewReader(conn)
 	var dataLine string
 	for {
 		readLine, _, err := reader.ReadLine()
@@ -28,10 +28,10 @@ func ReadDataTLS(conn tls.Conn) (string, error) {
 	return builder.String(), nil
 }
 
-func ReadAllLineTLS(conn tls.Conn) (string, error) {
+func ReadAllLineTLS(conn *tls.Conn) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(ReadDeadLine))
 	var builder strings.Builder
-	reader := bufio.NewReader(&conn)
+	reader := bufio.NewReader(conn)
 	var dataLine string
 
 	readLine, _, err := reader.ReadLine()
@@ -60,9 +60,9 @@ func ReadAllLineTLS(conn tls.Conn) (string, error) {
 	return builder.String(), nil
 }
 
-func ReadAllTLS(conn tls.Conn) (string, error) {
+func ReadAllTLS(conn *tls.Conn) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(ReadDeadLine))
-	reader := bufio.NewReader(&conn)
+	reader := bufio.NewReader(conn)
 
 	readLine, _, err := reader.ReadLine()
 	if err != nil {
@@ -71,7 +71,7 @@ func ReadAllTLS(conn tls.Conn) (string, error) {
 	return string(readLine), nil
 }
 
-func WriteLineTLS(conn tls.Conn, data string) error {
+func WriteLineTLS(conn *tls.Conn, data string) error {
 	conn.SetWriteDeadline(time.Now().Add(WriteDeadLine))
 	_, err := conn.Write([]byte(data + OS.NewLine))
 	return err
