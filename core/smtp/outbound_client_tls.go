@@ -14,7 +14,7 @@ import (
 
 type OutboundClientTLS struct {
 	dialer        *net.Dialer
-	conn          tls.Conn
+	conn          *tls.Conn
 	virtualMta    *VirtualMta
 	message       *entity.Message
 	domain        *core.Domain
@@ -26,7 +26,7 @@ func NewOutboundClientTLS() *OutboundClientTLS {
 	return &OutboundClientTLS{}
 }
 
-func (c *OutboundClient) SendMessageTLS(message *entity.Message, virtualMta *VirtualMta, domain *core.Domain) (transaction.TransactionResult, string) {
+func (c *OutboundClientTLS) SendMessageTLS(message *entity.Message, virtualMta *VirtualMta, domain *core.Domain) (transaction.TransactionResult, string) {
 	c.virtualMta = virtualMta
 	c.message = message
 	c.domain = domain
@@ -89,7 +89,7 @@ func (c *OutboundClient) SendMessageTLS(message *entity.Message, virtualMta *Vir
 	return transaction.Success, ""
 }
 
-func (client *OutboundClient) CreateTcpClientTLS() (bool, transaction.TransactionResult) {
+func (client *OutboundClientTLS) CreateTcpClientTLS() (bool, transaction.TransactionResult) {
 	if client.virtualMta.HandleLock() {
 		client.dialer = &net.Dialer{
 			Timeout:   Timeout,
@@ -106,7 +106,7 @@ func (client *OutboundClient) CreateTcpClientTLS() (bool, transaction.Transactio
 	return false, transaction.RetryRequired
 }
 
-func (c *OutboundClient) ConnectTLS() (bool, transaction.TransactionResult, string) {
+func (c *OutboundClientTLS) ConnectTLS() (bool, transaction.TransactionResult, string) {
 	conn, err := tls.DialWithDialer(c.dialer, "tcp", fmt.Sprintf("%s:%s", c.domain.MXRecords[0].Host, Port), nil)
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -121,17 +121,17 @@ func (c *OutboundClient) ConnectTLS() (bool, transaction.TransactionResult, stri
 	return true, transaction.Success, "connected"
 }
 
-func (c *OutboundClient) ExecHeloTLS() transaction.TransactionResult {
+func (c *OutboundClientTLS) ExecHeloTLS() transaction.TransactionResult {
 	// We have connected to the MX, Say EHLO.
-	WriteLineNoTLS(c.conn, fmt.Sprintf("EHLO %s", c.virtualMta.VmtaHostName))
-	lines, _ := ReadAllLineNoTLS(c.conn)
+	WriteLineTLS(c.conn, fmt.Sprintf("EHLO %s", c.virtualMta.VmtaHostName))
+	lines, _ := ReadAllLineTLS(c.conn)
 	if strings.HasPrefix(lines, "421") {
 		return transaction.ServiceNotAvalible
 	}
 	if !strings.HasPrefix(lines, "2") {
 		// If server didn't respond with a success code on EHLO then we should retry with HELO
-		_ = WriteLineNoTLS(c.conn, fmt.Sprintf("HELO %s", c.virtualMta.VmtaHostName))
-		lines, _ := ReadAllLineNoTLS(c.conn)
+		_ = WriteLineTLS(c.conn, fmt.Sprintf("HELO %s", c.virtualMta.VmtaHostName))
+		lines, _ := ReadAllLineTLS(c.conn)
 		if !strings.HasPrefix(lines, "250") {
 			c.conn.Close()
 			return transaction.ServiceNotAvalible
@@ -146,8 +146,8 @@ func (c *OutboundClient) ExecHeloTLS() transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecMailFromTLS(mailFrom string) transaction.TransactionResult {
-	err := WriteLineNoTLS(c.conn, fmt.Sprintf("MAIL FROM: <%s>", mailFrom))
+func (c *OutboundClientTLS) ExecMailFromTLS(mailFrom string) transaction.TransactionResult {
+	err := WriteLineTLS(c.conn, fmt.Sprintf("MAIL FROM: <%s>", mailFrom))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if opError.Timeout() {
@@ -157,7 +157,7 @@ func (c *OutboundClient) ExecMailFromTLS(mailFrom string) transaction.Transactio
 		return transaction.ServiceNotAvalible
 	}
 	if !c.canPipeLining {
-		lines, _ := ReadAllLineNoTLS(c.conn)
+		lines, _ := ReadAllLineTLS(c.conn)
 		if !strings.HasPrefix(lines, "250") {
 			if strings.HasPrefix(lines, "421") {
 				return transaction.ServiceNotAvalible
@@ -168,8 +168,8 @@ func (c *OutboundClient) ExecMailFromTLS(mailFrom string) transaction.Transactio
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecRcptToTLS(rcptTo string) transaction.TransactionResult {
-	err := WriteLineNoTLS(c.conn, fmt.Sprintf("RCPT TO: <%s>", rcptTo))
+func (c *OutboundClientTLS) ExecRcptToTLS(rcptTo string) transaction.TransactionResult {
+	err := WriteLineTLS(c.conn, fmt.Sprintf("RCPT TO: <%s>", rcptTo))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if opError.Timeout() {
@@ -179,7 +179,7 @@ func (c *OutboundClient) ExecRcptToTLS(rcptTo string) transaction.TransactionRes
 		return transaction.ServiceNotAvalible
 	}
 	if !c.canPipeLining {
-		lines, _ := ReadAllLineNoTLS(c.conn)
+		lines, _ := ReadAllLineTLS(c.conn)
 		if !strings.HasPrefix(lines, "250") {
 			return transaction.RejectedByRemoteServer
 		}
@@ -187,9 +187,9 @@ func (c *OutboundClient) ExecRcptToTLS(rcptTo string) transaction.TransactionRes
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecDataTLS(data string) transaction.TransactionResult {
+func (c *OutboundClientTLS) ExecDataTLS(data string) transaction.TransactionResult {
 	// Data response or Mail From if pipelining
-	err := WriteLineNoTLS(c.conn, fmt.Sprintf("DATA"))
+	err := WriteLineTLS(c.conn, fmt.Sprintf("DATA"))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if opError.Timeout() {
@@ -198,31 +198,31 @@ func (c *OutboundClient) ExecDataTLS(data string) transaction.TransactionResult 
 		}
 		return transaction.ServiceNotAvalible
 	}
-	lines, _ := ReadAllLineNoTLS(c.conn)
+	lines, _ := ReadAllLineTLS(c.conn)
 	// If the remote MX supports pipelining then we need to check the MAIL FROM and RCPT to responses.
 	if c.canPipeLining {
 		// Check MAIL FROM OK.
 		if !strings.HasPrefix(lines, "250") {
-			_, _ = ReadAllLineNoTLS(c.conn) // RCPT TO
-			_, _ = ReadAllLineNoTLS(c.conn) // DATA
+			_, _ = ReadAllLineTLS(c.conn) // RCPT TO
+			_, _ = ReadAllLineTLS(c.conn) // DATA
 			return transaction.RejectedByRemoteServer
 		}
 
 		// Check RCPT TO OK.
-		lines, _ = ReadAllLineNoTLS(c.conn) // RCPT TO
+		lines, _ = ReadAllLineTLS(c.conn) // RCPT TO
 		if !strings.HasPrefix(lines, "250") {
-			_, _ = ReadAllLineNoTLS(c.conn) // DATA
+			_, _ = ReadAllLineTLS(c.conn) // DATA
 			return transaction.RejectedByRemoteServer
 		}
 
 		// Get the Data Command response.
-		lines, _ = ReadAllLineNoTLS(c.conn) // DATA
+		lines, _ = ReadAllLineTLS(c.conn) // DATA
 	}
 	if !strings.HasPrefix(lines, "354") {
-		_, _ = ReadAllLineNoTLS(c.conn) // DATA
+		_, _ = ReadAllLineTLS(c.conn) // DATA
 		return transaction.RejectedByRemoteServer
 	}
-	err = WriteLineNoTLS(c.conn, fmt.Sprintf("%s%s.", data, OS.NewLine))
+	err = WriteLineTLS(c.conn, fmt.Sprintf("%s%s.", data, OS.NewLine))
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if opError.Timeout() {
@@ -231,17 +231,17 @@ func (c *OutboundClient) ExecDataTLS(data string) transaction.TransactionResult 
 		}
 		return transaction.ServiceNotAvalible
 	}
-	lines, _ = ReadAllLineNoTLS(c.conn)
+	lines, _ = ReadAllLineTLS(c.conn)
 	if !strings.HasPrefix(lines, "250") {
 		return transaction.RejectedByRemoteServer
 	}
 	return transaction.Success
 }
 
-func (c *OutboundClient) ExecRsetTLS() transaction.TransactionResult {
+func (c *OutboundClientTLS) ExecRsetTLS() transaction.TransactionResult {
 	return transaction.RetryRequired
 }
 
-func (c *OutboundClient) ExecQuitTLS() transaction.TransactionResult {
+func (c *OutboundClientTLS) ExecQuitTLS() transaction.TransactionResult {
 	return transaction.RetryRequired
 }
