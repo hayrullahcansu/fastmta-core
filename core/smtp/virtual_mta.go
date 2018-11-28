@@ -4,7 +4,20 @@ import (
 	"fmt"
 	"net"
 	"sync"
+
+	"../../global"
 )
+
+var Pool *VMtaPool
+var poolOnce sync.Once
+
+type VMtaPool struct {
+	virtualMtas []*VirtualMta
+	rules       []*Rule
+}
+
+type Rule struct {
+}
 
 type VirtualMta struct {
 	lock            *sync.Mutex
@@ -16,6 +29,25 @@ type VirtualMta struct {
 	IsSmtpInbound   bool
 	IsSmtpOutbound  bool
 	LocalPort       int
+}
+
+func InstancePool() *VMtaPool {
+	poolOnce.Do(func() {
+		Pool = newVMtaPool()
+	})
+	return Pool
+}
+
+func newVMtaPool() *VMtaPool {
+	_pool := &VMtaPool{
+		virtualMtas: make([]*VirtualMta, 0),
+		rules:       make([]*Rule, 0),
+	}
+	for _, vmta := range global.StaticConfig.IPAddresses {
+		vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound)
+		_pool.virtualMtas = append(_pool.virtualMtas, vm)
+	}
+	return _pool
 }
 
 //CreateNewVirtualMta creates new dto
