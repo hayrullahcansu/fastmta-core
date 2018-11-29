@@ -10,17 +10,17 @@ import (
 )
 
 const (
-	InboundExchange                  string = "fastmta_ex_inbound"
-	InboundStagingExchange           string = "fastmta_ex_inbound_staging"
-	OutboundExchange                 string = "fastmta_ex_outbound"
-	RoutingKeyInbound                string = "inbound"
-	RoutingKeyInboundStaging         string = "inbound_staging"
-	RoutingKeyOutboundMultipleSender string = "outbound_multiple_sender"
-	RoutingKeyOutboundNormal         string = "outbound"
-	InboundQueueName                 string = "fastmta_inbound"
-	InboundStagingQueueName          string = "fastmta_inbound_staging"
-	OutboundMultipleSenderQueueName  string = "fastmta_outbound_multiple_sender"
-	OutboundNormalQueueName          string = "fastmta_outbound_normal"
+	InboundExchange                 string = "fastmta_ex_inbound"
+	InboundStagingExchange          string = "fastmta_ex_inbound_staging"
+	OutboundExchange                string = "fastmta_ex_outbound"
+	RoutingKeyInbound               string = "inbound"
+	RoutingKeyInboundStaging        string = "inbound_staging"
+	RoutingKeyOutboundMultiple      string = "outbound_multiple"
+	RoutingKeyOutboundNormal        string = "outbound_normal"
+	InboundQueueName                string = "fastmta_inbound"
+	InboundStagingQueueName         string = "fastmta_inbound_staging"
+	OutboundMultipleSenderQueueName string = "fastmta_outbound_multiple"
+	OutboundNormalQueueName         string = "fastmta_outbound_normal"
 )
 
 type RabbitMqClient struct {
@@ -113,7 +113,7 @@ func (client *RabbitMqClient) QueueBind(name string, exchangeName string, routin
 func (client *RabbitMqClient) ExchangeDeclare(name string, durable bool, autoDelete bool, internal bool, noWait bool, args amqp.Table) error {
 	return client.Channel.ExchangeDeclare(
 		name,       // name
-		"fanout",   // type
+		"direct",   // type
 		durable,    // durable
 		autoDelete, // auto-deleted
 		internal,   // internal
