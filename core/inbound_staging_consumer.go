@@ -90,7 +90,7 @@ func (consumer *InboundStagingConsumer) Run() {
 				if true {
 					err = consumer.RabbitMqClient.Publish(
 						queue.OutboundExchange,
-						queue.RoutingKeyOutboundMultipleSender,
+						queue.RoutingKeyOutboundMultiple,
 						false,
 						false,
 						data,
