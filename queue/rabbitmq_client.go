@@ -61,6 +61,24 @@ func (client *RabbitMqClient) Connect(makeSure bool) (*amqp.Connection, *amqp.Ch
 	return client.Conn, client.Channel
 }
 
+func (client *RabbitMqClient) ConnectForInit() (*amqp.Connection, *amqp.Channel, error) {
+	if !client.IsConnected {
+		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", client.Conf.UserName, client.Conf.Password, client.Conf.Host, client.Conf.Port))
+		if err != nil {
+			fmt.Printf("Can't connect rabbitClient error:%s%s", err, OS.NewLine)
+		}
+		channel, err := conn.Channel()
+		if err != nil {
+			fmt.Printf("Can't connect rabbitClient error:%s%s", err, OS.NewLine)
+		}
+		client.IsConnected = true
+		client.Conn = conn
+		client.Channel = channel
+		return conn, channel, nil
+	}
+	return client.Conn, client.Channel, nil
+}
+
 func (client *RabbitMqClient) MakeSureConnectionEndless() {
 	//TODO: makesure connection is endless
 	if !client.MakeSureConnection {
