@@ -6,7 +6,9 @@ import (
 	"sync"
 	"time"
 
+	OS "../cross"
 	"../entity"
+	"../logger"
 )
 
 const (
@@ -117,7 +119,10 @@ func (b *MultipleSender) AppendMessage(host string, message *entity.Message) {
 
 func (b *MultipleSender) Run() {
 	b.m.Lock()
-	defer b.m.Unlock()
+	defer func() {
+		fmt.Println("unlocked")
+		b.m.Unlock()
+	}()
 	for index := 0; index < len(b.pool); index++ {
 		go b.pool[index].run()
 	}
@@ -132,8 +137,6 @@ func (b *MultipleSender) Stop() {
 }
 
 func (b *MultipleSender) getDomainMessageStack() (bool, chan *entity.Message) {
-	b.m.Lock()
-	defer b.m.Unlock()
 	for _, stack := range b.domainMessageStacks {
 		if stack.isHandlable(false) {
 			return stack.handle(false)
@@ -145,7 +148,7 @@ loop:
 			return stack.handle(true)
 		}
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 5)
 	goto loop
 }
 func (w *worker) run() {
@@ -161,24 +164,26 @@ func (w *worker) run() {
 			}
 		}
 	}()
+	w.setTtl()
 	for {
 		select {
 		case <-w.timeout:
 			w.send <- true
 		case <-w.send:
 			w.sendAllMessage()
-			w.setTtl()
 		case <-w.stop:
 			w.sendAllMessage()
-			w.setTtl()
 		}
 	}
 }
 
 func (w *worker) setTtl() {
 	go func() {
-		time.Sleep(1 * time.Second)
-		w.timeout <- true
+		for {
+			time.Sleep(1 * time.Second)
+			w.timeout <- true
+		}
+
 	}()
 	// for w.{
 	// }
@@ -186,5 +191,10 @@ func (w *worker) setTtl() {
 }
 
 func (w *worker) sendAllMessage() {
-	fmt.Println("sended all message")
+	if len(w.messages) > 0 {
+		logger.Info.Printf("Sended all message %d%s", len(w.messages), OS.NewLine)
+	} else {
+		logger.Info.Printf("Worker message array empty%s", len(w.messages), OS.NewLine)
+
+	}
 }

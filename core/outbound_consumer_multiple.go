@@ -23,9 +23,9 @@ func NewOutboundConsumerMultipleSender() *OutboundConsumerMultipleSender {
 
 func (consumer *OutboundConsumerMultipleSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
-	ch, err := consumer.RabbitMqClient.Consume(queue.OutboundMultipleSenderQueueName, "", false, false, true, nil)
+	ch, err := consumer.RabbitMqClient.Consume(queue.OutboundMultipleQueueName, "", false, false, true, nil)
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.OutboundMultipleSenderQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.OutboundMultipleQueueName, err, OS.NewLine))
 	}
 	for {
 		select {
@@ -33,7 +33,7 @@ func (consumer *OutboundConsumerMultipleSender) Run() {
 			if ok {
 				pureMessage := &entity.Message{}
 				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Info.Printf("Recieved message From %s", queue.OutboundMultipleSenderQueueName)
+				logger.Info.Printf("Recieved message From %s", queue.OutboundMultipleQueueName)
 				if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 					//exchange.InstanceRouter().
 				}

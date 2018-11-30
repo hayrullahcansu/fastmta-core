@@ -37,7 +37,8 @@ func (boss *Boss) Run() {
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
 		go inboundServer.Run()
 	}
-
+	go core.InstanceBulkSender().Run()
+	//go core.InstanceBulkSender().Run()
 	go boss.InboundConsumer.Run()
 	go boss.InboundStagingConsumer.Run()
 	go boss.OutboundConsumerNormal.Run()

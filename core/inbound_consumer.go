@@ -42,7 +42,7 @@ func (consumer *InboundConsumer) Run() {
 						Data:      string(pureMessage.Data),
 						Status:    "w",
 						RcptTo:    string(pureMessage.RcptTo[i]),
-						Host:      string(pureMessage.MailFrom[strings.LastIndex(pureMessage.MailFrom, "@"):]),
+						Host:      string(pureMessage.RcptTo[i][strings.LastIndex(pureMessage.RcptTo[i], "@")+1:]),
 					}
 					data, err := json.Marshal(msg)
 					if err == nil {

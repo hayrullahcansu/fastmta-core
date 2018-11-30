@@ -85,6 +85,7 @@ func (consumer *InboundStagingConsumer) Run() {
 				}
 				data, err := json.Marshal(msg)
 				if true {
+					logger.Info.Printf("XXX%s", OS.NewLine)
 					err = consumer.RabbitMqClient.Publish(
 						queue.OutboundExchange,
 						queue.RoutingKeyOutboundMultiple,
@@ -93,6 +94,7 @@ func (consumer *InboundStagingConsumer) Run() {
 						data,
 					)
 				} else {
+					logger.Info.Printf("YYY%s", OS.NewLine)
 					err = consumer.RabbitMqClient.Publish(
 						queue.OutboundExchange,
 						queue.RoutingKeyOutboundNormal,

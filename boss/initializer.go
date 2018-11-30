@@ -74,21 +74,22 @@ func defineRabbitMqEnvironment() {
 	rabbitMqClient := queue.New()
 	defer rabbitMqClient.Close()
 	rabbitMqClient.ConnectForInit()
-	rabbitMqClient.ExchangeDeclare(queue.InboundStagingExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.InboundStagingQueueName, queue.InboundStagingExchange, queue.RoutingKeyInboundStaging, false, nil)
 
 	rabbitMqClient.ExchangeDeclare(queue.InboundExchange, true, false, false, false, nil)
 	_, _ = rabbitMqClient.QueueDeclare(queue.InboundQueueName, true, false, false, false, nil)
 	rabbitMqClient.QueueBind(queue.InboundQueueName, queue.InboundExchange, queue.RoutingKeyInbound, false, nil)
+
+	rabbitMqClient.ExchangeDeclare(queue.InboundStagingExchange, true, false, false, false, nil)
+	_, _ = rabbitMqClient.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
+	rabbitMqClient.QueueBind(queue.InboundStagingQueueName, queue.InboundStagingExchange, queue.RoutingKeyInboundStaging, false, nil)
 
 	rabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
 	_, _ = rabbitMqClient.QueueDeclare(queue.OutboundNormalQueueName, true, false, false, false, nil)
 	rabbitMqClient.QueueBind(queue.OutboundNormalQueueName, queue.OutboundExchange, queue.RoutingKeyOutboundNormal, false, nil)
 
 	rabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.InboundStagingQueueName, queue.InboundExchange, "", false, nil)
+	_, _ = rabbitMqClient.QueueDeclare(queue.OutboundMultipleQueueName, true, false, false, false, nil)
+	rabbitMqClient.QueueBind(queue.OutboundMultipleQueueName, queue.OutboundExchange, queue.RoutingKeyOutboundMultiple, false, nil)
 }
 
 func loadDomainCache() {
