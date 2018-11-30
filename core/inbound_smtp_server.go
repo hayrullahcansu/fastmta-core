@@ -21,9 +21,7 @@ type InboundSmtpServer struct {
 func CreateNewInboundSmtpServer(vmta *VirtualMta) *InboundSmtpServer {
 	client := queue.New()
 	client.Connect(true)
-	client.ExchangeDeclare(queue.InboundExchange, true, false, false, false, nil)
-	que, _ := client.QueueDeclare(queue.InboundQueueName, true, false, false, false, nil)
-	client.QueueBind(que.Name, queue.InboundExchange, queue.RoutingKeyInbound, false, nil)
+
 	return &InboundSmtpServer{
 		ID:             "",
 		VMta:           vmta,

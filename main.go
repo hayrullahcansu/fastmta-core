@@ -9,7 +9,6 @@ import (
 
 	"./boss"
 	OS "./cross"
-	"./global"
 	"./logger"
 )
 
@@ -48,8 +47,17 @@ func main() {
 		AppCleanup()
 		os.Exit(1)
 	}()
-	global.Run()
+
+	boss.InitSystem()
 	boss := boss.New()
+	// rabbitClient := queue.New()
+	// rabbitClient.Connect(true)
+	// _, _ = rabbitClient.Consume(queue.InboundQueueName, "", false, false, true, nil)
+
+	// rabbitClient2 := queue.New()
+	// rabbitClient2.Connect(true)
+	// _, _ = rabbitClient2.Consume(queue.InboundQueueName, "", false, false, true, nil)
+
 	boss.Run()
 	// infinite print loop
 	select {}
