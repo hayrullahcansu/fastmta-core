@@ -22,9 +22,6 @@ func NewOutboundConsumerNormalSender() *OutboundConsumerNormalSender {
 
 func (consumer *OutboundConsumerNormalSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
-	consumer.RabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
-	que, _ := consumer.RabbitMqClient.QueueDeclare(queue.OutboundNormalQueueName, true, false, false, false, nil)
-	consumer.RabbitMqClient.QueueBind(que.Name, queue.OutboundExchange, queue.RoutingKeyOutboundNormal, false, nil)
 	ch, err := consumer.RabbitMqClient.Consume(queue.OutboundNormalQueueName, "", false, false, true, nil)
 	if err != nil {
 		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.OutboundNormalQueueName, err, OS.NewLine))

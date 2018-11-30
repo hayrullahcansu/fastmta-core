@@ -23,9 +23,6 @@ func NewOutboundConsumerMultipleSender() *OutboundConsumerMultipleSender {
 
 func (consumer *OutboundConsumerMultipleSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
-	//consumer.RabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
-	_, _ = consumer.RabbitMqClient.QueueDeclare(queue.OutboundMultipleSenderQueueName, true, false, false, false, nil)
-	consumer.RabbitMqClient.QueueBind(queue.OutboundMultipleSenderQueueName, queue.OutboundExchange, queue.RoutingKeyOutboundMultiple, false, nil)
 	ch, err := consumer.RabbitMqClient.Consume(queue.OutboundMultipleSenderQueueName, "", false, false, true, nil)
 	if err != nil {
 		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.OutboundMultipleSenderQueueName, err, OS.NewLine))
