@@ -102,6 +102,7 @@ func InstanceBulkSender() *MultipleSender {
 		for index := 0; index < workerLimit; index++ {
 			bulkSender.pool[index] = newWorker(bulkSender)
 		}
+		logger.Info.Printf("WorkerLimit:%d %s", workerLimit, OS.NewLine)
 	})
 	return bulkSender
 }
@@ -154,34 +155,42 @@ loop:
 func (w *worker) run() {
 	go func() {
 		for {
+			logger.Info.Printf("Get message stack channel running %s", OS.NewLine)
 			ok, channel := w.parent.getDomainMessageStack()
+			logger.Info.Printf("Get message stack channel: %t,%p %s", ok, &channel, OS.NewLine)
 			if ok {
 				for len(w.messages) < messageLimit {
+					logger.Info.Printf("consuming a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 					msg := <-channel
+					logger.Info.Printf("consumed a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 					w.messages = append(w.messages, msg)
 				}
+				logger.Info.Printf("stack channel done %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 				w.send <- true
 			}
 		}
 	}()
-	w.setTtl()
+	w.setTTL()
 	for {
 		select {
-		case <-w.timeout:
-			w.send <- true
 		case <-w.send:
+			logger.Info.Printf("Send channel recieved %s", OS.NewLine)
 			w.sendAllMessage()
 		case <-w.stop:
+			logger.Info.Printf("Stop channel recieved %s", OS.NewLine)
 			w.sendAllMessage()
 		}
 	}
 }
 
-func (w *worker) setTtl() {
+func (w *worker) setTTL() {
 	go func() {
 		for {
-			time.Sleep(1 * time.Second)
-			w.timeout <- true
+			logger.Info.Printf("Timeout will work for %d %s", 5*time.Second, OS.NewLine)
+			time.Sleep(5 * time.Second)
+			logger.Info.Printf("Timeout working for %d %s", 5*time.Second, OS.NewLine)
+			w.send <- true
+			logger.Info.Printf("Timeout worked for %d %s", 5*time.Second, OS.NewLine)
 		}
 
 	}()
