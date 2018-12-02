@@ -15,94 +15,109 @@ type OutboundClientTLS struct {
 	dialer        *net.Dialer
 	conn          *tls.Conn
 	virtualMta    *VirtualMta
-	message       *entity.Message
+	messages      []*entity.Message
 	domain        *Domain
 	canPipeLining bool
 }
 
 func NewOutboundClientTLS() *OutboundClientTLS {
-
 	return &OutboundClientTLS{}
 }
 
-func (c *OutboundClientTLS) SendMessageTLS(message *entity.Message, virtualMta *VirtualMta, domain *Domain) (transaction.TransactionResult, string) {
+func (c *OutboundClientTLS) SendMessageTLS(messages []*entity.Message, virtualMta *VirtualMta, domain *Domain) (bool, []*transaction.TransactionGroupResult) {
 	c.virtualMta = virtualMta
-	c.message = message
+	c.messages = messages
 	c.domain = domain
 	ok, r := c.CreateTcpClientTLS()
-	if !ok {
-		return r, "Ip address already in usage"
-	}
-
+	resultSet := make([]*transaction.TransactionGroupResult, len(messages))
+	resultSet[0] = &transaction.TransactionGroupResult{}
 	if false {
 		//if anyrule blocks to send
 		c.ExecQuitTLS()
 	}
 
 	ok, r, msg := c.ConnectTLS()
+
 	if !ok || r != transaction.Success {
-		return r, msg
+		resultSet[0].TransactionResult = r
+		resultSet[0].ResultMessage = msg
+		return true, resultSet
 	}
 
 	// Read the Server greeting.
 	lines, err := ReadAllLineNoTLS(c.conn)
 	if err != nil {
-		return transaction.FailedToConnect, err.Error()
+		resultSet[0].TransactionResult = transaction.FailedToConnect
+		resultSet[0].ResultMessage = err.Error()
+		return true, resultSet
 	}
 	// Check we get a valid banner.
 	if !strings.HasPrefix(lines, "2") {
 		if strings.HasPrefix(lines, "421") {
-			return transaction.ServiceNotAvalible, lines
+			resultSet[0].TransactionResult = transaction.ServiceNotAvalible
+			resultSet[0].ResultMessage = lines
+			return true, resultSet
 		}
-		return transaction.FailedToConnect, lines
+		resultSet[0].TransactionResult = transaction.FailedToConnect
+		resultSet[0].ResultMessage = lines
+		return true, resultSet
 	}
 
 	// We have connected, so say helo
 	r = c.ExecHeloTLS()
 	if r != transaction.Success {
-
 		//TODO: add this rule like "this host not valid or unable to connect"
-		return r, "service not avaliable"
+		resultSet[0].TransactionResult = r
+		resultSet[0].ResultMessage = "service not avaliable"
+		return true, resultSet
 	}
+	for i := 0; i < len(c.messages); i++ {
+		resultSet[i] = &transaction.TransactionGroupResult{}
 
-	r = c.ExecMailFromTLS(c.message.MailFrom)
-	if r != transaction.Success {
-		return r, "service not avaliable"
-	}
-
-	r = c.ExecRcptToTLS(c.message.RcptTo)
-	if r != transaction.Success {
-		return r, "service not avaliable"
-	}
-
-	mimeKit := false
-
-	if mimeKit {
-		//TODO: add dkim
-	} else {
-		r = c.ExecDataTLS(c.message.Data)
+		r = c.ExecMailFromTLS(c.messages[i].MailFrom)
 		if r != transaction.Success {
-			return r, "service not avaliable"
+			resultSet[i].TransactionResult = r
+			resultSet[i].ResultMessage = "service not avaliable"
+			continue
 		}
+
+		r = c.ExecRcptToTLS(c.messages[i].RcptTo)
+		if r != transaction.Success {
+			resultSet[i].TransactionResult = r
+			resultSet[i].ResultMessage = "service not avaliable"
+			continue
+		}
+
+		mimeKit := false
+
+		if mimeKit {
+			//TODO: add dkim
+		} else {
+			r = c.ExecDataTLS(c.messages[i].Data)
+			if r != transaction.Success {
+				resultSet[i].TransactionResult = r
+				resultSet[i].ResultMessage = "service not avaliable"
+				continue
+			}
+		}
+		resultSet[i].TransactionResult = transaction.Success
+		resultSet[i].ResultMessage = ""
+		continue
 	}
-	return transaction.Success, ""
+
+	return false, resultSet
 }
 
 func (client *OutboundClientTLS) CreateTcpClientTLS() (bool, transaction.TransactionResult) {
-	if client.virtualMta.HandleLock() {
-		client.dialer = &net.Dialer{
-			Timeout:   Timeout,
-			KeepAlive: KeepAlive,
-			LocalAddr: &net.TCPAddr{
-				IP: client.virtualMta.VmtaIPAddr.IP,
-			},
-		}
-		return true, transaction.Success
-	} else {
-		return false, transaction.ClientAlreadyInUse
+	client.virtualMta.HandleLock()
+	client.dialer = &net.Dialer{
+		Timeout:   Timeout,
+		KeepAlive: KeepAlive,
+		LocalAddr: &net.TCPAddr{
+			IP: client.virtualMta.VmtaIPAddr.IP,
+		},
 	}
-
-	return false, transaction.RetryRequired
+	return true, transaction.Success
 }
 
 func (c *OutboundClientTLS) ConnectTLS() (bool, transaction.TransactionResult, string) {
