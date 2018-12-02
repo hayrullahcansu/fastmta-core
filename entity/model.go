@@ -74,3 +74,11 @@ type Dkimmer struct {
 	Enabled    bool              `gorm:"Column:enabled"`
 	Options    *dkim.SignOptions `gorm:"-"`
 }
+
+type Settings struct {
+	DefaultSend string            `gorm:"type:varchar(500);INDEX;Column:base_domain_name"`
+	Selector    string            `gorm:"type:varchar(500);INDEX;Column:selector"`
+	PrivateKey  string            `gorm:"type:varchar(1000);Column:private_key"`
+	Enabled     bool              `gorm:"Column:enabled"`
+	Options     *dkim.SignOptions `gorm:"-"`
+}

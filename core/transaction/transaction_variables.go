@@ -14,3 +14,8 @@ const (
 	ClientAlreadyInUse
 	Timeout
 )
+
+type TransactionGroupResult struct {
+	TransactionResult TransactionResult
+	ResultMessage     string
+}
