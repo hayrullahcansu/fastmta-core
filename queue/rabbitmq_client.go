@@ -6,6 +6,7 @@ import (
 	"../conf"
 	OS "../cross"
 	"../global"
+	"../logger"
 	"github.com/streadway/amqp"
 )
 
@@ -80,7 +81,6 @@ func (client *RabbitMqClient) ConnectForInit() (*amqp.Connection, *amqp.Channel,
 }
 
 func (client *RabbitMqClient) MakeSureConnectionEndless() {
-	//TODO: makesure connection is endless
 	if !client.MakeSureConnection {
 		client.MakeSureConnection = true
 		go func() {
@@ -91,14 +91,14 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 				case err := <-notify:
 					client.IsConnected = false
 					client.MakeSureConnection = false
-					fmt.Printf("RabbitMqClient error handled: %s%s", err, OS.NewLine)
+					logger.Info.Printf("RabbitMqClient error handled: %s%s", err, OS.NewLine)
 					defer client.Connect(true)
 					break
 				case message, ok := <-notifyReturn:
 					if ok && client.IsConnected {
 						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
 						if err != nil {
-							fmt.Printf("RabbitMqClient returned Message cant publish: %s%s", err, OS.NewLine)
+							logger.Info.Printf("RabbitMqClient returned Message cant publish: %s%s", err, OS.NewLine)
 						}
 					}
 				}
