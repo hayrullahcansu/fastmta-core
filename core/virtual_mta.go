@@ -20,15 +20,17 @@ type Rule struct {
 }
 
 type VirtualMta struct {
-	lock            *sync.Mutex
-	isInUsage       bool
-	IPAddressString string
-	VmtaHostName    string
-	VmtaIPAddr      *net.IPAddr
-	Port            int
-	IsSmtpInbound   bool
-	IsSmtpOutbound  bool
-	LocalPort       int
+	lock                       *sync.Mutex
+	isInUsage                  bool
+	IPAddressString            string
+	VmtaHostName               string
+	VmtaIPAddr                 *net.IPAddr
+	Port                       int
+	IsSmtpInbound              bool
+	IsSmtpOutbound             bool
+	LocalPort                  int
+	TLS                        bool
+	ConcurrentConnectionNumber int
 }
 
 func InstancePool() *VMtaPool {
@@ -44,21 +46,20 @@ func newVMtaPool() *VMtaPool {
 		rules:       make([]*Rule, 0),
 	}
 	for _, vmta := range global.StaticConfig.IPAddresses {
-		vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound)
+		vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound, false)
 		_pool.virtualMtas = append(_pool.virtualMtas, vm)
 	}
 	return _pool
 }
 
 //CreateNewVirtualMta creates new dto
-func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, isOutbound bool) *VirtualMta {
-
+func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, isOutbound bool, tls bool) *VirtualMta {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		panic(fmt.Sprintf("%s given ip address cant parsing", ip))
 	}
 	ipAddr := &net.IPAddr{IP: parsedIP}
-	return &VirtualMta{
+	vm := &VirtualMta{
 		lock:            &sync.Mutex{},
 		isInUsage:       false,
 		IPAddressString: ip,
@@ -68,17 +69,21 @@ func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, i
 		IsSmtpInbound:   isInbound,
 		IsSmtpOutbound:  isOutbound,
 		LocalPort:       0,
+		TLS:             tls,
 	}
+	if port == 25 {
+		vm.TLS = false
+	}
+	return vm
 }
 
-func (virtualMta *VirtualMta) HandleLock() bool {
+func (virtualMta *VirtualMta) HandleLock() {
 	virtualMta.lock.Lock()
 	defer virtualMta.lock.Unlock()
 	if !virtualMta.isInUsage {
 		virtualMta.isInUsage = true
-		return true
 	}
-	return false
+	virtualMta.ConcurrentConnectionNumber++
 }
 
 func (virtualMta *VirtualMta) IsInUsage() bool {
@@ -87,12 +92,11 @@ func (virtualMta *VirtualMta) IsInUsage() bool {
 	return virtualMta.isInUsage
 }
 
-func (virtualMta *VirtualMta) ReleaseLock() bool {
+func (virtualMta *VirtualMta) ReleaseLock() {
 	virtualMta.lock.Lock()
 	defer virtualMta.lock.Unlock()
-	if virtualMta.isInUsage {
+	if virtualMta.isInUsage && virtualMta.ConcurrentConnectionNumber < 2 {
 		virtualMta.isInUsage = false
-		return true
 	}
-	return false
+	virtualMta.ConcurrentConnectionNumber--
 }
