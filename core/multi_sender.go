@@ -209,6 +209,9 @@ func (w *worker) setTTL() {
 
 func (w *worker) sendAllMessage() {
 	if len(w.messages) > 0 {
+		//var virtualMta VirtualMta
+		//if(virtualMta.TLS)
+
 		logger.Info.Printf("Sended all message %d%s", len(w.messages), OS.NewLine)
 		w.messages = nil
 	} else {
