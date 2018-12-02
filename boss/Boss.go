@@ -31,7 +31,7 @@ func New() *Boss {
 
 func (boss *Boss) Run() {
 	for _, vmta := range global.StaticConfig.IPAddresses {
-		vm := core.CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound)
+		vm := core.CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound, false)
 		boss.VirtualMtas = append(boss.VirtualMtas, vm)
 		inboundServer := core.CreateNewInboundSmtpServer(vm)
 		boss.InboundMtas = append(boss.InboundMtas, inboundServer)

@@ -36,7 +36,6 @@ func InitSystem() {
 	global.StaticRabbitMqConfig = &config.RabbitMq
 	dbEnsureCreated()
 	defineRabbitMqEnvironment()
-	//TODO: get instance and intialize
 	go loadDomainCache()
 	go loadDkimCache()
 
