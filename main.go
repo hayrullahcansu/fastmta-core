@@ -10,6 +10,10 @@ import (
 	"./boss"
 	OS "./cross"
 	"./logger"
+
+	"./iris/web/controllers"
+	"github.com/kataras/iris"
+	"github.com/kataras/iris/mvc"
 )
 
 var ops int64
@@ -24,7 +28,6 @@ const (
 func main() {
 	// load command line arguments
 	start := time.Now()
-
 	//m := &sync.Mutex{}
 
 	//runtime.Goexit()
@@ -60,6 +63,57 @@ func main() {
 
 	boss.Run()
 	// infinite print loop
+	app := iris.New()
+	// You got full debug messages, useful when using MVC and you want to make
+	// sure that your code is aligned with the Iris' MVC Architecture.
+	app.Logger().SetLevel("debug")
+
+	// Load the template files.
+	tmpl := iris.HTML("./web/views", ".html").
+		Layout("shared/layout.html").
+		Reload(true)
+	app.RegisterView(tmpl)
+
+	app.StaticWeb("/public", "./web/public")
+
+	app.OnAnyErrorCode(func(ctx iris.Context) {
+		ctx.ViewData("Message", ctx.Values().
+			GetStringDefault("message", "The page you're looking for doesn't exist"))
+		ctx.View("shared/error.html")
+	})
+
+	// ---- Serve our controllers. ----
+
+	// "/users" based mvc application.
+	dashboard := mvc.New(app.Party("/dashboard"))
+	// Add the basic authentication(admin:password) middleware
+	// for the /users based requests.
+	//users.Router.Use(middleware.BasicAuth)
+	// Bind the "userService" to the UserController's Service (interface) field.
+	dashboard.Handle(new(controllers.DashboardController))
+
+	// "/user" based mvc application.
+	// sessManager := sessions.New(sessions.Config{
+	// 	Cookie:  "sessioncookiename",
+	// 	Expires: 24 * time.Hour,
+	// })
+
+	// http://localhost:8080/noexist
+	// and all controller's methods like
+	// http://localhost:8080/users/1
+	// http://localhost:8080/user/register
+	// http://localhost:8080/user/login
+	// http://localhost:8080/user/me
+	// http://localhost:8080/user/logout
+	// basic auth: "admin", "password", see "./middleware/basicauth.go" source file.
+	app.Run(
+		// Starts the web server at localhost:8080
+		iris.Addr("localhost:8080"),
+		// Ignores err server closed log when CTRL/CMD+C pressed.
+		iris.WithoutServerError(iris.ErrServerClosed),
+		// Enables faster json serialization and more.
+		iris.WithOptimizations,
+	)
 	select {}
 
 }

@@ -10,8 +10,10 @@ import (
 
 var Pool *VMtaPool
 var poolOnce sync.Once
+var counter int
 
 type VMtaPool struct {
+	m           *sync.Mutex
 	virtualMtas []*VirtualMta
 	rules       []*Rule
 }
@@ -40,8 +42,18 @@ func InstancePool() *VMtaPool {
 	return Pool
 }
 
+func (v *VMtaPool) GetVMtA() *VirtualMta {
+	v.m.Lock()
+	defer func() {
+		counter++
+		v.m.Unlock()
+	}()
+	return v.virtualMtas[counter%len(v.virtualMtas)]
+}
+
 func newVMtaPool() *VMtaPool {
 	_pool := &VMtaPool{
+		m:           &sync.Mutex{},
 		virtualMtas: make([]*VirtualMta, 0),
 		rules:       make([]*Rule, 0),
 	}

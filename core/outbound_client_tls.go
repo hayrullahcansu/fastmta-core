@@ -32,7 +32,7 @@ func (c *OutboundClientTLS) SendMessageTLS(messages []*entity.Message, virtualMt
 	resultSet := make([]*transaction.TransactionGroupResult, len(messages))
 	resultSet[0] = &transaction.TransactionGroupResult{}
 	if false {
-		//if anyrule blocks to send
+		//if anyrule blocks to SendMessageTLS
 		c.ExecQuitTLS()
 	}
 
