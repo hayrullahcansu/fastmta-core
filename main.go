@@ -67,14 +67,13 @@ func main() {
 	// You got full debug messages, useful when using MVC and you want to make
 	// sure that your code is aligned with the Iris' MVC Architecture.
 	app.Logger().SetLevel("debug")
-
 	// Load the template files.
-	tmpl := iris.HTML("./web/views", ".html").
+	tmpl := iris.HTML("./views", ".html").
 		Layout("shared/layout.html").
 		Reload(true)
 	app.RegisterView(tmpl)
 
-	app.StaticWeb("/public", "./web/public")
+	app.StaticWeb("/", "./public")
 
 	app.OnAnyErrorCode(func(ctx iris.Context) {
 		ctx.ViewData("Message", ctx.Values().
@@ -85,11 +84,15 @@ func main() {
 	// ---- Serve our controllers. ----
 
 	// "/users" based mvc application.
+
+	defaultDashboard := mvc.New(app.Party("/"))
 	dashboard := mvc.New(app.Party("/dashboard"))
 	// Add the basic authentication(admin:password) middleware
 	// for the /users based requests.
 	//users.Router.Use(middleware.BasicAuth)
 	// Bind the "userService" to the UserController's Service (interface) field.
+
+	defaultDashboard.Handle(new(controllers.DashboardController))
 	dashboard.Handle(new(controllers.DashboardController))
 
 	// "/user" based mvc application.

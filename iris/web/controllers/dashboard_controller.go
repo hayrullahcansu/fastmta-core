@@ -24,10 +24,9 @@ type DashboardController struct {
 
 var indexStaticView = mvc.View{
 	Name: "dashboard/index.html",
-	Data: iris.Map{"Title": "User Login"},
 }
 
 // GetRegister handles GET: http://localhost:8080/user/register.
-func (c *DashboardController) GetIndex() mvc.Result {
+func (c *DashboardController) Get() mvc.Result {
 	return indexStaticView
 }
