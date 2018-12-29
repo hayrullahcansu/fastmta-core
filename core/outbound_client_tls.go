@@ -121,7 +121,7 @@ func (client *OutboundClientTLS) CreateTcpClientTLS() (bool, transaction.Transac
 }
 
 func (c *OutboundClientTLS) ConnectTLS() (bool, transaction.TransactionResult, string) {
-	conn, err := tls.DialWithDialer(c.dialer, "tcp", fmt.Sprintf("%s:%s", c.domain.MXRecords[0].Host, Port), nil)
+	conn, err := tls.DialWithDialer(c.dialer, "tcp", fmt.Sprintf("%s:%d", c.domain.MXRecords[0].Host, Port), nil)
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if dnsError, ok := opError.Err.(*net.DNSError); ok {

@@ -19,6 +19,7 @@ import (
 	"../queue"
 	"github.com/emersion/go-dkim"
 	"github.com/patrickmn/go-cache"
+	"github.com/streadway/amqp"
 )
 
 const (
@@ -70,25 +71,37 @@ func dbEnsureCreated() {
 }
 
 func defineRabbitMqEnvironment() {
-	rabbitMqClient := queue.New()
-	defer rabbitMqClient.Close()
-	rabbitMqClient.ConnectForInit()
+	conn, err := amqp.Dial(queue.NewRabbitMqDialString())
+	if err != nil {
+		//FIXME: Send signal to main process to kill
+		panic(err)
+	}
+	defer conn.Close()
+	ch, err := conn.Channel()
+	if err != nil {
+		//FIXME: Send signal to main process to kill
+		panic(err)
+	}
+	defer ch.Close()
+	err = ch.ExchangeDeclare(queue.InboundExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(queue.InboundStagingExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(queue.OutboundExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(queue.OutboundExchange, "direct", true, false, false, false, nil)
 
-	rabbitMqClient.ExchangeDeclare(queue.InboundExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.InboundQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.InboundQueueName, queue.InboundExchange, queue.RoutingKeyInbound, false, nil)
+	_, err = ch.QueueDeclare(queue.InboundQueueName, true, false, false, false, nil)
+	_, err = ch.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
+	_, err = ch.QueueDeclare(queue.OutboundNormalQueueName, true, false, false, false, nil)
+	_, err = ch.QueueDeclare(queue.OutboundMultipleQueueName, true, false, false, false, nil)
 
-	rabbitMqClient.ExchangeDeclare(queue.InboundStagingExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.InboundStagingQueueName, queue.InboundStagingExchange, queue.RoutingKeyInboundStaging, false, nil)
+	err = ch.QueueBind(queue.InboundQueueName, queue.RoutingKeyInbound, queue.InboundExchange, false, nil)
+	fmt.Println(err)
+	err = ch.QueueBind(queue.InboundStagingQueueName, queue.RoutingKeyInboundStaging, queue.InboundStagingExchange, false, nil)
+	fmt.Println(err)
+	err = ch.QueueBind(queue.OutboundNormalQueueName, queue.RoutingKeyOutboundNormal, queue.OutboundExchange, false, nil)
+	fmt.Println(err)
+	err = ch.QueueBind(queue.OutboundMultipleQueueName, queue.RoutingKeyOutboundMultiple, queue.OutboundExchange, false, nil)
+	fmt.Println(err)
 
-	rabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.OutboundNormalQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.OutboundNormalQueueName, queue.OutboundExchange, queue.RoutingKeyOutboundNormal, false, nil)
-
-	rabbitMqClient.ExchangeDeclare(queue.OutboundExchange, true, false, false, false, nil)
-	_, _ = rabbitMqClient.QueueDeclare(queue.OutboundMultipleQueueName, true, false, false, false, nil)
-	rabbitMqClient.QueueBind(queue.OutboundMultipleQueueName, queue.OutboundExchange, queue.RoutingKeyOutboundMultiple, false, nil)
 }
 
 func loadDomainCache() {

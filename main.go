@@ -26,6 +26,26 @@ const (
 )
 
 func main() {
+
+	// host = "gmail-smtp-in.l.google.COM:25"
+	// dialer := &net.Dialer{
+	// 	Timeout:   Timeout,
+	// 	KeepAlive: KeepAlive,
+	// 	LocalAddr: &net.TCPAddr{
+	// 		IP: "127.0.0.1",
+	// 	},
+	// }
+	// conn, err := dialer.Dial("tcp", host)
+	// if err != nil {
+	// 	if opError, ok := err.(*net.OpError); ok {
+	// 		if dnsError, ok := opError.Err.(*net.DNSError); ok {
+	// 			return false, transaction.HostNotFound, dnsError.Error()
+	// 		}
+	// 	}
+	// 	//TODO: define all error like dnsError
+	// 	return false, transaction.ServiceNotAvalible, "service not avaliable"
+	// }
+
 	// load command line arguments
 	start := time.Now()
 	//m := &sync.Mutex{}

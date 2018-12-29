@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/streadway/amqp"
+
 	OS "../cross"
 	"../entity"
 	"../logger"
@@ -13,24 +15,30 @@ import (
 )
 
 type InboundConsumer struct {
-	RabbitMqClient *queue.RabbitMqClient
+	conn *amqp.Connection
+	ch   *amqp.Channel
+	q    chan bool
 }
 
 func NewInboundConsumer() *InboundConsumer {
 	return &InboundConsumer{
-		RabbitMqClient: queue.New(),
+		q: make(chan bool),
 	}
 }
 
 func (consumer *InboundConsumer) Run() {
-	consumer.RabbitMqClient.Connect(true)
-	ch, err := consumer.RabbitMqClient.Consume(queue.InboundQueueName, "", false, false, true, nil)
+	conn, err := amqp.Dial(queue.NewRabbitMqDialString())
 	if err != nil {
 		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundQueueName, err, OS.NewLine))
 	}
+	ch, err := conn.Channel()
+	deliveries, err := ch.Consume(queue.InboundQueueName, "", false, false, true, false, nil)
+	if err != nil {
+
+	}
 	for {
 		select {
-		case inboundMessage, ok := <-ch:
+		case inboundMessage, ok := <-deliveries:
 			if ok {
 				pureMessage := &entity.InboundMessage{}
 				json.Unmarshal(inboundMessage.Body, pureMessage)
@@ -46,21 +54,27 @@ func (consumer *InboundConsumer) Run() {
 					}
 					data, err := json.Marshal(msg)
 					if err == nil {
-						consumer.RabbitMqClient.Publish(
+						ch.Publish(
 							queue.InboundStagingExchange,
 							queue.RoutingKeyInboundStaging,
 							false,
 							false,
-							data,
+							amqp.Publishing{
+								ContentType: "text/plain",
+								Body:        data,
+							},
 						)
 					}
 
 				}
 				inboundMessage.Ack(false)
 			}
+		case <-consumer.q:
+			break
 		}
 	}
 }
+
 func (consumer *InboundConsumer) Stop() {
-	consumer.RabbitMqClient.Close()
+	consumer.q <- true
 }

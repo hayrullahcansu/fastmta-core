@@ -119,17 +119,16 @@ func (client *OutboundClient) CreateTcpClientNoTLS() (bool, transaction.Transact
 	client.dialer = &net.Dialer{
 		Timeout:   Timeout,
 		KeepAlive: KeepAlive,
-		LocalAddr: &net.TCPAddr{
-			IP:   client.virtualMta.VmtaIPAddr.IP,
-			Port: 25,
-		},
 	}
 	return true, transaction.Success
 }
 
 func (c *OutboundClient) ConnectNoTLS() (bool, transaction.TransactionResult, string) {
-	conn, err := c.dialer.Dial("tcp", fmt.Sprintf("%s:%s", c.domain.MXRecords[0].Host, Port))
+	host := fmt.Sprintf("%s:%d", c.domain.MXRecords[0].Host, Port)
+	host = "gmail-smtp-in.l.google.COM:25"
+	conn, err := c.dialer.Dial("tcp", host)
 	if err != nil {
+		fmt.Println(err.Error())
 		if opError, ok := err.(*net.OpError); ok {
 			if dnsError, ok := opError.Err.(*net.DNSError); ok {
 				return false, transaction.HostNotFound, dnsError.Error()

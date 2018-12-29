@@ -32,6 +32,14 @@ type RabbitMqClient struct {
 	Channel            *amqp.Channel
 }
 
+func NewRabbitMqDialString() string {
+	return fmt.Sprintf("amqp://%s:%s@%s:%d/", global.StaticRabbitMqConfig.UserName, global.StaticRabbitMqConfig.Password, global.StaticRabbitMqConfig.Host, global.StaticRabbitMqConfig.Port)
+}
+
+func NewRabbitMq() (*amqp.Connection, error) {
+	return amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", global.StaticRabbitMqConfig.UserName, global.StaticRabbitMqConfig.Password, global.StaticRabbitMqConfig.Host, global.StaticRabbitMqConfig.Port))
+}
+
 func New() *RabbitMqClient {
 	client := &RabbitMqClient{
 		MakeSureConnection: false,
