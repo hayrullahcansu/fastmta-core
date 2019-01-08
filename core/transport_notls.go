@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	OS "../cross"
+	OS "github.com/hayrullahcansu/zetamail/cross"
 )
 
 func ReadDataNoTLS(conn net.Conn) (string, error) {

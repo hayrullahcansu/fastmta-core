@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	OS "../cross"
-	"../entity"
-	"../logger"
-	"../queue"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 type OutboundConsumerNormalSender struct {

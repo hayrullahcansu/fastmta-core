@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	OS "../cross"
-	"../entity"
-	"./transaction"
+	"github.com/hayrullahcansu/zetamail/core/transaction"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
 )
 
 const (

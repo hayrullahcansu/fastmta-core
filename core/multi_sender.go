@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	OS "../cross"
-	"../entity"
-	"../logger"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/zetamail/logger"
 )
 
 const (

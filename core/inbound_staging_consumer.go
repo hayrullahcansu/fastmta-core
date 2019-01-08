@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"strings"
 
-	"../caching"
-	OS "../cross"
-	"../entity"
-	"../logger"
-	"../queue"
 	dkim "github.com/emersion/go-dkim"
+	"github.com/hayrullahcansu/zetamail/caching"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----

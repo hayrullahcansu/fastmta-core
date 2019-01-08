@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	"../global"
+	"github.com/hayrullahcansu/zetamail/global"
 )
 
 var Pool *VMtaPool

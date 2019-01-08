@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	OS "../cross"
-	"../logger"
-	"../queue"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 type InboundSmtpServer struct {

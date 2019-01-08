@@ -7,11 +7,11 @@ import (
 	"os/signal"
 	"time"
 
-	"./boss"
-	OS "./cross"
-	"./logger"
+	"github.com/hayrullahcansu/zetamail/boss"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/logger"
 
-	"./iris/web/controllers"
+	"github.com/hayrullahcansu/zetamail/iris/web/controllers"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/mvc"
 )

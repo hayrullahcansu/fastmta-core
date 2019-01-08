@@ -1,7 +1,7 @@
 package core
 
 import (
-	"../entity"
+	"github.com/hayrullahcansu/zetamail/entity"
 )
 
 type NormalSender struct {

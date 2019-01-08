@@ -1,7 +1,7 @@
 package global
 
 import (
-	"../conf"
+	"github.com/hayrullahcansu/zetamail/conf"
 )
 
 var (

@@ -7,11 +7,11 @@ import (
 
 	"github.com/streadway/amqp"
 
-	OS "../cross"
-	"../entity"
-	"../logger"
-	"../queue"
 	"github.com/google/uuid"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 type InboundConsumer struct {

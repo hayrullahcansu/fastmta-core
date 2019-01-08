@@ -1,8 +1,8 @@
 package boss
 
 import (
-	"../core"
-	"../global"
+	"github.com/hayrullahcansu/zetamail/core"
+	"github.com/hayrullahcansu/zetamail/global"
 )
 
 type Boss struct {
@@ -16,7 +16,6 @@ type Boss struct {
 }
 
 func New() *Boss {
-
 	boss := &Boss{
 		VirtualMtas:              make([]*core.VirtualMta, 0),
 		InboundMtas:              make([]*core.InboundSmtpServer, 0),

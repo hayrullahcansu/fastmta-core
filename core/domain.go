@@ -3,7 +3,7 @@ package core
 import (
 	"net"
 
-	"../entity"
+	"github.com/hayrullahcansu/zetamail/entity"
 )
 
 type Domain struct {

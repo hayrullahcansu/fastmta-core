@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	OS "../cross"
-	"../entity"
-	"../queue"
 	"github.com/google/uuid"
+	OS "github.com/hayrullahcansu/zetamail/cross"
+	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 const (
