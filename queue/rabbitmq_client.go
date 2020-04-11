@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hayrullahcansu/fastmta-core/conf"
-	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/global"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/streadway/amqp"
@@ -74,11 +74,11 @@ func (client *RabbitMqClient) ConnectForInit() (*amqp.Connection, *amqp.Channel,
 	if !client.IsConnected {
 		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", client.Conf.UserName, client.Conf.Password, client.Conf.Host, client.Conf.Port))
 		if err != nil {
-			fmt.Printf("Can't connect rabbitClient error:%s%s", err, OS.NewLine)
+			fmt.Printf("Can't connect rabbitClient error:%s%s", err, cross.NewLine)
 		}
 		channel, err := conn.Channel()
 		if err != nil {
-			fmt.Printf("Can't connect rabbitClient error:%s%s", err, OS.NewLine)
+			fmt.Printf("Can't connect rabbitClient error:%s%s", err, cross.NewLine)
 		}
 		client.IsConnected = true
 		client.Conn = conn
@@ -99,14 +99,14 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 				case err := <-notify:
 					client.IsConnected = false
 					client.MakeSureConnection = false
-					logger.Info.Printf("RabbitMqClient error handled: %s%s", err, OS.NewLine)
+					logger.Infof("RabbitMqClient error handled: %s%s", err, cross.NewLine)
 					defer client.Connect(true)
 					break
 				case message, ok := <-notifyReturn:
 					if ok && client.IsConnected {
 						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
 						if err != nil {
-							logger.Info.Printf("RabbitMqClient returned Message cant publish: %s%s", err, OS.NewLine)
+							logger.Infof("RabbitMqClient returned Message cant publish: %s%s", err, cross.NewLine)
 						}
 					}
 				}

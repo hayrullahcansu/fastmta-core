@@ -33,12 +33,12 @@ func (consumer *OutboundConsumerMultipleSender) Run() {
 			if ok {
 				pureMessage := &entity.Message{}
 				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Info.Printf("Recieved message From %s", queue.OutboundMultipleQueueName)
+				logger.Infof("Recieved message From %s", queue.OutboundMultipleQueueName)
 				if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 					//exchange.InstanceRouter().
 				}
 				InstanceBulkSender().AppendMessage(pureMessage.Host, pureMessage)
-				logger.Info.Printf("queued message to send %s", pureMessage.RcptTo)
+				logger.Infof("queued message to send %s", pureMessage.RcptTo)
 
 				outboundMessage.Ack(false)
 			}

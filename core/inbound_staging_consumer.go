@@ -70,7 +70,7 @@ func (consumer *InboundStagingConsumer) Run() {
 			if ok {
 				msg := &entity.Message{}
 				json.Unmarshal(messageDelivery.Body, msg)
-				logger.Info.Printf("Recieved message From %s", queue.InboundStagingQueueName)
+				logger.Infof("Recieved message From %s", queue.InboundStagingQueueName)
 				d, ok := caching.InstanceDkim().C.Get(msg.Host)
 				if ok {
 					dkimmer, ok := d.(entity.Dkimmer)
@@ -85,7 +85,7 @@ func (consumer *InboundStagingConsumer) Run() {
 				}
 				data, err := json.Marshal(msg)
 				if true {
-					logger.Info.Printf("XXX%s", OS.NewLine)
+					logger.Infof("XXX%s", OS.NewLine)
 					err = consumer.RabbitMqClient.Publish(
 						queue.OutboundExchange,
 						queue.RoutingKeyOutboundMultiple,
@@ -94,7 +94,7 @@ func (consumer *InboundStagingConsumer) Run() {
 						data,
 					)
 				} else {
-					logger.Info.Printf("YYY%s", OS.NewLine)
+					logger.Infof("YYY%s", OS.NewLine)
 					err = consumer.RabbitMqClient.Publish(
 						queue.OutboundExchange,
 						queue.RoutingKeyOutboundNormal,

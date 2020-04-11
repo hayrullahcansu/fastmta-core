@@ -32,9 +32,9 @@ func (consumer *OutboundConsumerNormalSender) Run() {
 			if ok {
 				pureMessage := &entity.Message{}
 				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Info.Printf("Recieved message From %s", queue.OutboundNormalQueueName)
+				logger.Infof("Recieved message From %s", queue.OutboundNormalQueueName)
 
-				logger.Info.Printf("Sended message to %s", pureMessage.RcptTo)
+				logger.Infof("Sended message to %s", pureMessage.RcptTo)
 
 				outboundMessage.Ack(false)
 			}

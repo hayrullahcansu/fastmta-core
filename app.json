@@ -12,7 +12,7 @@
         "host":"localhost",
         "port":5672,
         "username":"guest",
-        "password":"guest",
+        "password":"1",
         "virtual_host":"",
         "exchange_name":""
     }

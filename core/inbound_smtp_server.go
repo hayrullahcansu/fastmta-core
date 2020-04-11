@@ -40,7 +40,7 @@ func (smtpServer *InboundSmtpServer) Run() {
 		panic(fmt.Sprintf("%s Can't listen inbound %s", mergedAddress, err))
 		//LOG
 	}
-	logger.Info.Printf("%s Listening%s", mergedAddress, OS.NewLine)
+	logger.Infof("%s Listening%s", mergedAddress, OS.NewLine)
 	defer listener.Close()
 	for {
 		// Listen for an incoming connection.

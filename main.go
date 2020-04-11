@@ -62,7 +62,7 @@ func main() {
 
 	go func() {
 		s := <-sigs
-		logger.Info.Printf("RECEIVED SIGNAL: %s%s", s, OS.NewLine)
+		logger.Infof("RECEIVED SIGNAL: %s%s", s, OS.NewLine)
 		AppCleanup()
 		os.Exit(1)
 	}()
@@ -84,5 +84,5 @@ func main() {
 }
 func AppCleanup() {
 	time.Sleep(time.Millisecond * time.Duration(1000))
-	logger.Info.Println("CLEANUP APP BEFORE EXIT!!!")
+	logger.Infof("CLEANUP APP BEFORE EXIT!!!")
 }

@@ -28,8 +28,7 @@ const (
 )
 
 func InitSystem() {
-	logger.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
-
+	logger.Instance()
 	confText := readConfigFromFile()
 	config := conf.Config{}
 	json.Unmarshal([]byte(confText), &config)

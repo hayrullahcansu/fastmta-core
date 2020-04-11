@@ -47,7 +47,7 @@ func (d *domainMessageStack) isHandlable(lastTry bool) bool {
 	return d.isHandlableQuery(lastTry)
 }
 func (d *domainMessageStack) isHandlableQuery(lastTry bool) bool {
-	logger.Info.Printf("IsHandlableQuery: d.consumerCounter < workerConsumeLimit->%t    len(d.MessageStack)-> %d   lastTry-> %t   %s", d.consumerCounter < workerConsumeLimit, len(d.MessageStack), lastTry, OS.NewLine)
+	logger.Infof("IsHandlableQuery: d.consumerCounter < workerConsumeLimit->%t    len(d.MessageStack)-> %d   lastTry-> %t   %s", d.consumerCounter < workerConsumeLimit, len(d.MessageStack), lastTry, OS.NewLine)
 	if d.consumerCounter < workerConsumeLimit && len(d.MessageStack) > 0 &&
 		(lastTry || (!lastTry && len(d.MessageStack) > messageLimit)) {
 		return true
@@ -103,7 +103,7 @@ func InstanceBulkSender() *MultipleSender {
 		for index := 0; index < workerLimit; index++ {
 			bulkSender.pool[index] = newWorker(bulkSender)
 		}
-		logger.Info.Printf("WorkerLimit:%d %s", workerLimit, OS.NewLine)
+		logger.Infof("WorkerLimit:%d %s", workerLimit, OS.NewLine)
 	})
 	return bulkSender
 }
@@ -139,13 +139,13 @@ func (b *MultipleSender) Stop() {
 }
 
 func (b *MultipleSender) getDomainMessageStack() (bool, *domainMessageStack) {
-	logger.Info.Printf("domainstacksXXX: %v%s", b.domainMessageStacks, OS.NewLine)
+	logger.Infof("domainstacksXXX: %v%s", b.domainMessageStacks, OS.NewLine)
 	for _, stack := range b.domainMessageStacks {
 		if stack.isHandlable(false) {
 			return stack.handle(false), stack
 		}
 	}
-	logger.Info.Printf("domainstacksYYY: %v%s", b.domainMessageStacks, OS.NewLine)
+	logger.Infof("domainstacksYYY: %v%s", b.domainMessageStacks, OS.NewLine)
 
 	for _, stack := range b.domainMessageStacks {
 		if stack.isHandlable(true) {
@@ -158,18 +158,18 @@ func (w *worker) run() {
 	go func() {
 		timer := 0.0
 		for {
-			logger.Info.Printf("Get message stack channel running %s", OS.NewLine)
+			logger.Infof("Get message stack channel running %s", OS.NewLine)
 			ok, stack := w.parent.getDomainMessageStack()
-			logger.Info.Printf("Get message stack channel: %t,%p %s", ok, &stack, OS.NewLine)
+			logger.Infof("Get message stack channel: %t,%p %s", ok, &stack, OS.NewLine)
 			if ok {
 				timer = 0
 				for len(w.messages) < messageLimit {
-					logger.Info.Printf("consuming a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
+					logger.Infof("consuming a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 					msg := <-stack.MessageStack
-					logger.Info.Printf("consumed a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
+					logger.Infof("consumed a message from stack channel %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 					w.messages = append(w.messages, msg)
 				}
-				logger.Info.Printf("stack channel done %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
+				logger.Infof("stack channel done %d/%d %s", len(w.messages), messageLimit, OS.NewLine)
 				w.send <- true
 				stack.release()
 			} else {
@@ -187,10 +187,10 @@ func (w *worker) run() {
 	for {
 		select {
 		case <-w.send:
-			logger.Info.Printf("Send channel recieved %s", OS.NewLine)
+			logger.Infof("Send channel recieved %s", OS.NewLine)
 			w.sendAllMessage()
 		case <-w.stop:
-			logger.Info.Printf("Stop channel recieved %s", OS.NewLine)
+			logger.Infof("Stop channel recieved %s", OS.NewLine)
 			w.sendAllMessage()
 		}
 	}
@@ -211,10 +211,10 @@ func (w *worker) sendAllMessage() {
 	if len(w.messages) > 0 {
 		//if(virtualMta.TLS)
 		SendMessages(w.messages, w.messages[0].Host)
-		logger.Info.Printf("Sended all message %d%s", len(w.messages), OS.NewLine)
+		logger.Infof("Sended all message %d%s", len(w.messages), OS.NewLine)
 		w.messages = nil
 	} else {
-		//logger.Info.Printf("Worker message array empty%s", OS.NewLine)
+		//logger.Infof("Worker message array empty%s", OS.NewLine)
 
 	}
 }

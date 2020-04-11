@@ -30,11 +30,11 @@ func SendMessages(message []*entity.Message, host string) {
 
 	if result {
 		//AllMessage have the same error
-		logger.Info.Printf("%s %s %s", resultSet[0].TransactionResult, resultSet[0].ResultMessage, OS.NewLine)
+		logger.Infof("%s %s %s", resultSet[0].TransactionResult, resultSet[0].ResultMessage, OS.NewLine)
 	} else {
 		//different transaction result eachother
 		for _, row := range resultSet {
-			logger.Info.Printf("%s %s %s", row.TransactionResult, row.ResultMessage, OS.NewLine)
+			logger.Infof("%s %s %s", row.TransactionResult, row.ResultMessage, OS.NewLine)
 		}
 	}
 }

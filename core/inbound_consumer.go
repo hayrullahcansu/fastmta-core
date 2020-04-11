@@ -42,7 +42,7 @@ func (consumer *InboundConsumer) Run() {
 			if ok {
 				pureMessage := &entity.InboundMessage{}
 				json.Unmarshal(inboundMessage.Body, pureMessage)
-				logger.Info.Printf("Recieved message From %s", queue.InboundQueueName)
+				logger.Infof("Recieved message From %s", queue.InboundQueueName)
 				for i := 0; i < len(pureMessage.RcptTo); i++ {
 					msg := &entity.Message{
 						MessageID: uuid.New().String(),
