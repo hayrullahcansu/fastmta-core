@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/logger"
-	"github.com/hayrullahcansu/zetamail/queue"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/queue"
 )
 
 type InboundSmtpServer struct {

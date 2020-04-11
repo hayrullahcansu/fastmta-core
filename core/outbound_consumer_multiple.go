@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hayrullahcansu/zetamail/caching"
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/entity"
-	"github.com/hayrullahcansu/zetamail/logger"
-	"github.com/hayrullahcansu/zetamail/queue"
+	"github.com/hayrullahcansu/fastmta-core/caching"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/queue"
 )
 
 type OutboundConsumerMultipleSender struct {

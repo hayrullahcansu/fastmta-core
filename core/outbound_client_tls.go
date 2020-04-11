@@ -6,9 +6,9 @@ import (
 	"net"
 	"strings"
 
-	"github.com/hayrullahcansu/zetamail/core/transaction"
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/fastmta-core/core/transaction"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/entity"
 )
 
 type OutboundClientTLS struct {

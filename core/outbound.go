@@ -1,10 +1,10 @@
 package core
 
 import (
-	"github.com/hayrullahcansu/zetamail/core/transaction"
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/entity"
-	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/fastmta-core/core/transaction"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/logger"
 )
 
 func SendMessages(message []*entity.Message, host string) {

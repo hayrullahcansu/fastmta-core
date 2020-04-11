@@ -1,7 +1,7 @@
 package global
 
 import (
-	"github.com/hayrullahcansu/zetamail/conf"
+	"github.com/hayrullahcansu/fastmta-core/conf"
 )
 
 var (

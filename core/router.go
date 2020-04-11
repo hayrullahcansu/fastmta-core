@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/fastmta-core/entity"
 )
 
 var (

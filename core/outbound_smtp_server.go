@@ -3,7 +3,7 @@ package core
 import (
 	"net"
 
-	"github.com/hayrullahcansu/zetamail/queue"
+	"github.com/hayrullahcansu/fastmta-core/queue"
 )
 
 type OutboundSmtpServer struct {

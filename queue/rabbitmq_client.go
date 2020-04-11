@@ -3,10 +3,10 @@ package queue
 import (
 	"fmt"
 
-	"github.com/hayrullahcansu/zetamail/conf"
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/global"
-	"github.com/hayrullahcansu/zetamail/logger"
+	"github.com/hayrullahcansu/fastmta-core/conf"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/global"
+	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/streadway/amqp"
 )
 

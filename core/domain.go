@@ -3,7 +3,7 @@ package core
 import (
 	"net"
 
-	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/fastmta-core/entity"
 )
 
 type Domain struct {

@@ -1,8 +1,8 @@
 package boss
 
 import (
-	"github.com/hayrullahcansu/zetamail/core"
-	"github.com/hayrullahcansu/zetamail/global"
+	"github.com/hayrullahcansu/fastmta-core/core"
+	"github.com/hayrullahcansu/fastmta-core/global"
 )
 
 type Boss struct {

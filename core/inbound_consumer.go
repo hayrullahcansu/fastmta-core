@@ -8,10 +8,10 @@ import (
 	"github.com/streadway/amqp"
 
 	"github.com/google/uuid"
-	OS "github.com/hayrullahcansu/zetamail/cross"
-	"github.com/hayrullahcansu/zetamail/entity"
-	"github.com/hayrullahcansu/zetamail/logger"
-	"github.com/hayrullahcansu/zetamail/queue"
+	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/queue"
 )
 
 type InboundConsumer struct {

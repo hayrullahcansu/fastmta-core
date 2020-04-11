@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/hayrullahcansu/zetamail/entity"
+	"github.com/hayrullahcansu/fastmta-core/entity"
 )
 
 type NormalSender struct {
