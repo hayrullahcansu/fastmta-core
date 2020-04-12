@@ -6,6 +6,7 @@ import (
 
 	"github.com/shiena/ansicolor"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,19 +16,20 @@ var _once sync.Once
 
 func initialLogger() {
 
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-		ForceColors:   true,
-	})
-
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	log.SetOutput(ansicolor.NewAnsiColorWriter(os.Stdout))
-	// Only log the warning severity or above.
-	log.SetLevel(log.WarnLevel)
+	// arguments stuffs
+	// config.SetConfigFilePath(*configPath)
 	_instance = log.New()
+	_instance.SetFormatter(&logrus.TextFormatter{
+		ForceColors:     true,
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+	_instance.SetOutput(ansicolor.NewAnsiColorWriter(os.Stdout))
+	_instance.SetReportCaller(false)
 
-	_instance.Error("In glorious colour")
+	// Only log the warning severity or above.
+	// _instance.SetLevel(log.WarnLevel)
+
 }
 
 func Instance() *log.Logger {
