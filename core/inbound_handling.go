@@ -11,7 +11,10 @@ import (
 	"github.com/google/uuid"
 	OS "github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/smtp/cmd"
+	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 )
 
 const (
@@ -23,80 +26,82 @@ const (
 
 func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 	defer conn.Close()
-	err := WriteLineNoTLS(conn, fmt.Sprintf("220 %s ESMTP %s Ready", server.VmtaHostName, MtaName))
+	t := rw.NewNoTLSTransporter(conn)
+	_cmd := cmd.NewSmtpCommander(t)
+
+	err := _cmd.SmtpReady(server.VmtaHostName, MtaName)
 	if err != nil {
 	}
 	errorCounter := 0
 	hasHello := false
 	var mtaMessage *entity.InboundMessage
 	for {
-		cmdOrginal, err := ReadAllNoTLS(conn)
+		cmdOrginal, err := _cmd.ReadCommand()
 		cmd := strings.ToUpper(cmdOrginal)
 		if err != nil {
 			//TODO: fix this error
-			fmt.Printf("%s"+OS.NewLine, err)
-			_ = WriteLineNoTLS(conn, "420 Timeout connection problem")
+			logger.Errorf("%s"+OS.NewLine, err)
+			_ = _cmd.Timeout420()
 			break
 		}
 		if cmd == "" {
 			//probably wrong command
 			errorCounter++
-			err = WriteLineNoTLS(conn, "500 5.5.2 Error: bad syntax")
+			err = _cmd.EmptyCommand()
 			continue
 		}
 		if errorCounter >= MaxErrorLimit {
-			_ = WriteLineNoTLS(conn, fmt.Sprintf("421 4.7.0 %s Error: too many errors", server.VmtaHostName))
+			_ = _cmd.ErrorLimitExceed(server.VmtaHostName)
 			break
 		}
 		//SMTP Commands that can be run before HELO is issued by client.
 		if cmd == "QUIT" {
-			_ = WriteLineNoTLS(conn, "221 Goodbye")
+			_ = _cmd.GoodBye221()
 			break
 		}
 		if cmd == "RSET" {
-			_ = WriteLineNoTLS(conn, "250 Ok")
+			_ = _cmd.Ok250()
 			mtaMessage = nil
 			continue
 		}
 		if cmd == "NOOP" {
-			_ = WriteLineNoTLS(conn, "250 Ok")
+			_ = _cmd.Ok250()
 			continue
 		}
 
 		if strings.HasPrefix(cmd, "HELO") || strings.HasPrefix(cmd, "EHLO") {
-
 			if strings.Index(cmd, " ") < 0 {
 				errorCounter++
-				_ = WriteLineNoTLS(conn, "501 Syntax error")
+				_ = _cmd.SyntaxError501()
 				continue
 			}
 			heloHost := strings.Trim(cmd[strings.Index(cmd, " "):], " ")
 			if strings.Index(heloHost, " ") >= 0 {
 				errorCounter++
-				_ = WriteLineNoTLS(conn, "501 Syntax error")
+				_ = _cmd.SyntaxError501()
 				continue
 			}
 			hasHello = true
 			if strings.HasPrefix(cmd, "HELO") {
-				_ = WriteLineNoTLS(conn, fmt.Sprintf("250 %s Hello [%s]", server.VmtaHostName, conn.RemoteAddr().String()))
+				_ = _cmd.Hello250(server.VmtaHostName, conn.RemoteAddr().String())
 			} else {
 				msg := ""
 				msg += fmt.Sprintf("250-%s Hello [%s]%s", server.VmtaHostName, conn.RemoteAddr().String(), OS.NewLine)
 				msg += fmt.Sprintf("250-8BITMIME%s", OS.NewLine)
 				msg += fmt.Sprintf("250-PIPELINING%s", OS.NewLine)
 				msg += fmt.Sprintf("250 Ok")
-				_ = WriteLineNoTLS(conn, msg)
+				_ = _cmd.WriteLine(msg)
 			}
 			continue
 		}
 		if !hasHello {
 			errorCounter++
-			_ = WriteLineNoTLS(conn, "503 5.5.1 Error: send HELO/EHLO first")
+			_ = _cmd.HelloFirst503()
 			continue
 		}
 		if cmd == "AUTH LOGIN" {
 			errorCounter++
-			_ = WriteLineNoTLS(conn, "503 5.5.1 Error: authentication not enabled")
+			_ = _cmd.AuthenticationNotEnabled503()
 			//TODO: Enable Authentication
 			continue
 		}
@@ -118,7 +123,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 					mtaMessage.MimeMode = mimeMode
 				} else {
 					errorCounter++
-					_ = WriteLineNoTLS(conn, "501 Syntax error")
+					_ = _cmd.SyntaxError501()
 					continue
 				}
 			}
@@ -128,12 +133,12 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 				mailUser, err := mail.ParseAddress(address)
 				if err != nil {
 					errorCounter++
-					_ = WriteLineNoTLS(conn, "501 Syntax error")
+					_ = _cmd.SyntaxError501()
 					continue
 				}
 				mailFrom = mailUser.Address
 				mtaMessage.MailFrom = mailFrom
-				_ = WriteLineNoTLS(conn, "250 Ok")
+				_ = _cmd.Ok250()
 				continue
 			}
 		}
@@ -141,13 +146,13 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 		//CONTUNIE HERE
 		if strings.HasPrefix(cmd, "RCPT TO:") {
 			if mtaMessage == nil || mtaMessage.MailFrom == "" {
-				_ = WriteLineNoTLS(conn, "503 Bad sequence of commands")
+				_ = _cmd.BadSequenceCommands503()
 				continue
 			}
 			mailUser, err := mail.ParseAddress(strings.Trim(cmd[strings.Index(cmd, ":")+1:], " "))
 			if err != nil {
 				errorCounter++
-				_ = WriteLineNoTLS(conn, "501 Syntax error")
+				_ = _cmd.SyntaxError501()
 				continue
 			}
 			mailUserComponents := strings.Split(mailUser.Address, "@")
@@ -157,20 +162,20 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 			}
 			mtaMessage.MessageDestination = "Relay"
 			mtaMessage.RcptTo = append(mtaMessage.RcptTo, mailUser.Address)
-			_ = WriteLineNoTLS(conn, "250 Ok")
+			_ = _cmd.Ok250()
 			continue
 		}
 		if cmd == "DATA" {
 			if mtaMessage == nil || mtaMessage.MailFrom == "" {
 				errorCounter++
-				_ = WriteLineNoTLS(conn, "503 Bad sequence of commands")
+				_ = _cmd.BadSequenceCommands503()
 				continue
 			} else if len(mtaMessage.RcptTo) < 1 {
 				errorCounter++
-				_ = WriteLineNoTLS(conn, "554 No valid recipients")
+				_ = _cmd.NoValidRecipients554()
 				continue
 			}
-			_ = WriteLineNoTLS(conn, "354 Go ahead")
+			_ = _cmd.GoAHead354()
 			data, err := ReadDataNoTLS(conn)
 			if err != nil {
 				//TODO: fix this error
@@ -181,14 +186,14 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 
 			ok, err := AppendMessage(server, mtaMessage)
 			if ok {
-				_ = WriteLineNoTLS(conn, "250 Message queued for delivery")
+				_ = _cmd.QueuedForDelivery250()
 				mtaMessage = nil
 				continue
 			}
-			_ = WriteLineNoTLS(conn, "432 The recipient’s Exchange Server incoming mail queue has been stopped")
+			_ = _cmd.ExchangeServerStopped432()
 		}
 		errorCounter++
-		_ = WriteLineNoTLS(conn, "502 5.5.2 Error: command not recognized")
+		_ = _cmd.CommandNotRecognized502()
 		continue
 	}
 
