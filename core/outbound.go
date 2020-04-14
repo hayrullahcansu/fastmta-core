@@ -20,7 +20,6 @@ func SendMessages(message []*entity.Message, host string) {
 		virtualMta := InstancePool().GetVMtA()
 
 		if virtualMta.TLS {
-			client := NewOutboundClientTLS()
 			result, resultSet = client.SendMessageTLS(message, virtualMta, domain)
 		} else {
 			client := NewOutboundClient()

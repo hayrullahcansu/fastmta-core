@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 )
 
@@ -14,6 +15,31 @@ func NewSmtpCommander(t rw.Transporter) *SmtpCommander {
 	return &SmtpCommander{
 		t: t,
 	}
+}
+
+/*			SMTP COMMANDS			*/
+func (s *SmtpCommander) ExecEhlo(hostName string) error {
+	return s.t.WriteLine(fmt.Sprintf("EHLO %s", hostName))
+}
+
+func (s *SmtpCommander) ExecHelo(hostName string) error {
+	return s.t.WriteLine(fmt.Sprintf("HELO %s", hostName))
+}
+
+func (s *SmtpCommander) ExecMailFrom(mailFrom string) error {
+	return s.t.WriteLine(fmt.Sprintf("MAIL FROM: <%s>", mailFrom))
+}
+
+func (s *SmtpCommander) ExecRcptTo(rcptTo string) error {
+	return s.t.WriteLine(fmt.Sprintf("RCPT TO: <%s>", rcptTo))
+}
+
+func (s *SmtpCommander) ExecDataCommand() error {
+	return s.t.WriteLine("DATA")
+}
+
+func (s *SmtpCommander) ExecData(data string) error {
+	return s.t.WriteLine(fmt.Sprintf("%s%s.", data, cross.NewLine))
 }
 
 /*			WRITING COMMANDS			*/
@@ -91,4 +117,15 @@ func (s *SmtpCommander) NoValidRecipients554() error {
 /*			READING COMMANDS			*/
 func (s *SmtpCommander) ReadCommand() (string, error) {
 	return s.t.ReadAll()
+}
+
+func (s *SmtpCommander) ReadAllLine() (string, error) {
+	return s.t.ReadAllLine()
+}
+func (s *SmtpCommander) ReadData() (string, error) {
+	return s.t.ReadData()
+}
+
+func (s *SmtpCommander) Close() {
+	s.t.Close()
 }

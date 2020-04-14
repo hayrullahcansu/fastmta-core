@@ -5,4 +5,5 @@ type Transporter interface {
 	ReadAllLine() (string, error)
 	ReadAll() (string, error)
 	WriteLine(data string) error
+	Close()
 }

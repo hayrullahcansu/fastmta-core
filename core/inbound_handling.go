@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/queue"
@@ -40,7 +40,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 		cmd := strings.ToUpper(cmdOrginal)
 		if err != nil {
 			//TODO: fix this error
-			logger.Errorf("%s"+OS.NewLine, err)
+			logger.Errorf("%s"+cross.NewLine, err)
 			_ = _cmd.Timeout420()
 			break
 		}
@@ -86,9 +86,9 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 				_ = _cmd.Hello250(server.VmtaHostName, conn.RemoteAddr().String())
 			} else {
 				msg := ""
-				msg += fmt.Sprintf("250-%s Hello [%s]%s", server.VmtaHostName, conn.RemoteAddr().String(), OS.NewLine)
-				msg += fmt.Sprintf("250-8BITMIME%s", OS.NewLine)
-				msg += fmt.Sprintf("250-PIPELINING%s", OS.NewLine)
+				msg += fmt.Sprintf("250-%s Hello [%s]%s", server.VmtaHostName, conn.RemoteAddr().String(), cross.NewLine)
+				msg += fmt.Sprintf("250-8BITMIME%s", cross.NewLine)
+				msg += fmt.Sprintf("250-PIPELINING%s", cross.NewLine)
 				msg += fmt.Sprintf("250 Ok")
 				_ = _cmd.WriteLine(msg)
 			}
@@ -176,13 +176,13 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 				continue
 			}
 			_ = _cmd.GoAHead354()
-			data, err := ReadDataNoTLS(conn)
+			data, err := _cmd.ReadData()
 			if err != nil {
 				//TODO: fix this error
 			}
 
 			//TODO: Check validity
-			mtaMessage.Data = fmt.Sprintf("Received: by %s;%s%s%s", server.VmtaHostName, OS.NewLine, time.Now().UTC(), OS.NewLine) + data
+			mtaMessage.Data = fmt.Sprintf("Received: by %s;%s%s%s", server.VmtaHostName, cross.NewLine, time.Now().UTC(), cross.NewLine) + data
 
 			ok, err := AppendMessage(server, mtaMessage)
 			if ok {

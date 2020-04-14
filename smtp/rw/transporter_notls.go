@@ -29,3 +29,7 @@ func (t *NoTLSTransporter) WriteLine(data string) error {
 	_, err := t.conn.Write([]byte(data + cross.NewLine))
 	return err
 }
+
+func (t *NoTLSTransporter) Close() {
+	t.conn.Close()
+}
