@@ -1,13 +1,17 @@
 package core
 
 import (
+	"github.com/hayrullahcansu/fastmta-core/dns"
 	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/mta"
+	"github.com/hayrullahcansu/fastmta-core/smtp/outbound"
 )
 
 type NormalSender struct {
 	MessageChannel chan *entity.Message
 	ParentRouter   *Router
-	virtualMta     *VirtualMta
+	virtualMta     *mta.VirtualMta
 }
 
 func NewGeneralSender(router *Router) *NormalSender {
@@ -29,12 +33,12 @@ func (sender *NormalSender) Run() {
 		select {
 		case msg, ok := <-sender.MessageChannel:
 			if ok {
-				_, err := NewDomain(msg.Host)
+				_, err := dns.NewDomain(msg.Host)
 				if err != nil {
 					//TODO: this is bounce domain not found
-					_ = NewOutboundClient()
-					//transactionResult := client.SendMessage(msg, nil, domain)
-					//fmt.Println(transactionResult)
+					agent := outbound.NewAgent(sender.virtualMta)
+					_, transactionResult := agent.SendMessage(msg)
+					logger.Info(transactionResult)
 				}
 
 			}

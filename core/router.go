@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/mta"
 )
 
 var (
@@ -16,7 +17,7 @@ type Router struct {
 	GeneralChannel         chan *entity.Message
 	MessageChannel         chan *entity.Message
 	StopChannel            chan bool
-	OutboundVirtualMtaPool []*VirtualMta
+	OutboundVirtualMtaPool []*mta.VirtualMta
 }
 
 var instanceRouter *Router
@@ -39,7 +40,7 @@ func newRouter() *Router {
 	}
 }
 
-func (router *Router) Init(virtualMtas *[]*VirtualMta) {
+func (router *Router) Init(virtualMtas *[]*mta.VirtualMta) {
 	router.OutboundVirtualMtaPool = *virtualMtas
 }
 
@@ -113,7 +114,7 @@ func (router *Router) progressGeneralMessage() {
 	}
 }
 
-func (router *Router) GetVirtualMta() (*VirtualMta, bool) {
+func (router *Router) GetVirtualMta() (*mta.VirtualMta, bool) {
 	for _, value := range router.OutboundVirtualMtaPool {
 		if !value.IsInUsage() {
 			return value, true

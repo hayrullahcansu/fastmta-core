@@ -210,7 +210,7 @@ func (w *worker) setTTL() {
 func (w *worker) sendAllMessage() {
 	if len(w.messages) > 0 {
 		//if(virtualMta.TLS)
-		SendMessages(w.messages, w.messages[0].Host)
+		//TODO: implementd bulk sender
 		logger.Infof("Sended all message %d%s", len(w.messages), OS.NewLine)
 		w.messages = nil
 	} else {

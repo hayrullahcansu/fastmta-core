@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -12,7 +11,6 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
-	"github.com/hayrullahcansu/fastmta-core/queue"
 	"github.com/hayrullahcansu/fastmta-core/smtp/cmd"
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 )
@@ -197,15 +195,4 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 		continue
 	}
 
-}
-
-func AppendMessage(server *InboundSmtpServer, message *entity.InboundMessage) (bool, error) {
-	data, err := json.Marshal(message)
-	if err == nil {
-		err = server.RabbitMqClient.Publish(queue.InboundExchange, queue.RoutingKeyInbound, false, false, data)
-		if err == nil {
-			return true, err
-		}
-	}
-	return false, err
 }

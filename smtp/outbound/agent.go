@@ -4,34 +4,35 @@ import (
 	"net"
 	"strings"
 
-	"github.com/hayrullahcansu/fastmta-core/conf"
+	"github.com/hayrullahcansu/fastmta-core/dns"
+	"github.com/hayrullahcansu/fastmta-core/mta"
 	"github.com/hayrullahcansu/fastmta-core/smtp/cmd"
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 
 	"github.com/hayrullahcansu/fastmta-core/core/transaction"
-	"github.com/hayrullahcansu/fastmta-core/dns"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 )
 
 type Agent struct {
 	dialer rw.Dialer
 	// virtualMta    *VirtualMta
-	messages      []*entity.Message
-	virtualMta    *conf.VirtualMta
-	domain        *dns.Domain
+	// messages      []*entity.Message
+	virtualMta    *mta.VirtualMta
 	_cmd          *cmd.SmtpCommander
 	canPipeLining bool
 	canTLS        bool
 }
 
 //TODO: fill params
-func NewAgent() *Agent {
-	agent := &Agent{}
+func NewAgent(vmt *mta.VirtualMta) *Agent {
+	agent := &Agent{
+		virtualMta: vmt,
+	}
 	dialer := &net.Dialer{
 		Timeout:   Timeout,
 		KeepAlive: KeepAlive,
 		LocalAddr: &net.TCPAddr{
-			IP: []byte(agent.virtualMta.IP),
+			IP: []byte(agent.virtualMta.IPAddressString),
 		},
 	}
 	if agent.canTLS {
@@ -42,90 +43,89 @@ func NewAgent() *Agent {
 	return agent
 }
 
-func (c *Agent) SendMessages(messages []*entity.Message, domain *dns.Domain) (bool, []*transaction.TransactionGroupResult) {
-	c.messages = messages
-	c.domain = domain
-	resultSet := make([]*transaction.TransactionGroupResult, len(messages))
-	resultSet[0] = &transaction.TransactionGroupResult{}
+func (c *Agent) SendMessage(message *entity.Message) (bool, *transaction.TransactionGroupResult) {
+	var result = &transaction.TransactionGroupResult{}
 	if false {
-		//if anyrule blocks to SendMessageTLS
-		c.ExecQuitTLS()
+		//if anyrule blocks to SendMessage
+		c.ExecQuit()
+	}
+	domain, err := dns.NewDomain(message.Host)
+	if err != nil {
+		result.TransactionResult = transaction.FailedToConnect
+		result.ResultMessage = err.Error()
+		return true, result
 	}
 
-	ok, r, msg := c.ConnectTLS()
+	ok, r, msg := c.Connect(domain)
 
 	if !ok || r != transaction.Success {
-		resultSet[0].TransactionResult = r
-		resultSet[0].ResultMessage = msg
-		return true, resultSet
+		result.TransactionResult = r
+		result.ResultMessage = msg
+		return true, result
 	}
 
 	// Read the Server greeting.
 	lines, err := c._cmd.ReadAllLine()
 	if err != nil {
-		resultSet[0].TransactionResult = transaction.FailedToConnect
-		resultSet[0].ResultMessage = err.Error()
-		return true, resultSet
+		result.TransactionResult = transaction.FailedToConnect
+		result.ResultMessage = err.Error()
+		return true, result
 	}
 	// Check we get a valid banner.
 	if !strings.HasPrefix(lines, "2") {
 		if strings.HasPrefix(lines, "421") {
-			resultSet[0].TransactionResult = transaction.ServiceNotAvalible
-			resultSet[0].ResultMessage = lines
-			return true, resultSet
+			result.TransactionResult = transaction.ServiceNotAvalible
+			result.ResultMessage = lines
+			return true, result
 		}
-		resultSet[0].TransactionResult = transaction.FailedToConnect
-		resultSet[0].ResultMessage = lines
-		return true, resultSet
+		result.TransactionResult = transaction.FailedToConnect
+		result.ResultMessage = lines
+		return true, result
 	}
 
 	// We have connected, so say helo
-	r = c.ExecHeloTLS()
+	r = c.ExecHelo()
 	if r != transaction.Success {
 		//TODO: add this rule like "this host not valid or unable to connect"
-		resultSet[0].TransactionResult = r
-		resultSet[0].ResultMessage = "service not avaliable"
-		return true, resultSet
-	}
-	for i := 0; i < len(c.messages); i++ {
-		resultSet[i] = &transaction.TransactionGroupResult{}
-
-		r = c.ExecMailFromTLS(c.messages[i].MailFrom)
-		if r != transaction.Success {
-			resultSet[i].TransactionResult = r
-			resultSet[i].ResultMessage = "service not avaliable"
-			continue
-		}
-
-		r = c.ExecRcptToTLS(c.messages[i].RcptTo)
-		if r != transaction.Success {
-			resultSet[i].TransactionResult = r
-			resultSet[i].ResultMessage = "service not avaliable"
-			continue
-		}
-
-		mimeKit := false
-
-		if mimeKit {
-			//TODO: add dkim
-		} else {
-			r = c.ExecDataTLS(c.messages[i].Data)
-			if r != transaction.Success {
-				resultSet[i].TransactionResult = r
-				resultSet[i].ResultMessage = "service not avaliable"
-				continue
-			}
-		}
-		resultSet[i].TransactionResult = transaction.Success
-		resultSet[i].ResultMessage = ""
-		continue
+		result.TransactionResult = r
+		result.ResultMessage = "service not avaliable"
+		return true, result
 	}
 
-	return false, resultSet
+	r = c.ExecMailFrom(message.MailFrom)
+	if r != transaction.Success {
+		result.TransactionResult = r
+		result.ResultMessage = "service not avaliable"
+		return true, result
+	}
+
+	r = c.ExecRcptTo(message.RcptTo)
+	if r != transaction.Success {
+		result.TransactionResult = r
+		result.ResultMessage = "service not avaliable"
+		return true, result
+	}
+
+	mimeKit := false
+
+	if mimeKit {
+		//TODO: add dkim
+	} else {
+		r = c.ExecData(message.Data)
+		if r != transaction.Success {
+			result.TransactionResult = r
+			result.ResultMessage = "service not avaliable"
+			return true, result
+		}
+	}
+	result.TransactionResult = transaction.Success
+	result.ResultMessage = ""
+
+	return false, result
 }
 
-func (c *Agent) ConnectTLS() (bool, transaction.TransactionResult, string) {
-	err := c.dialer.Deal(c.domain.MXRecords[0].Host, Port)
+func (c *Agent) Connect(domain *dns.Domain) (bool, transaction.TransactionResult, string) {
+	err := c.dialer.Deal(domain.MXRecords[0].Host, Port)
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
 			if dnsError, ok := opError.Err.(*net.DNSError); ok {
@@ -140,16 +140,16 @@ func (c *Agent) ConnectTLS() (bool, transaction.TransactionResult, string) {
 	return true, transaction.Success, "connected"
 }
 
-func (c *Agent) ExecHeloTLS() transaction.TransactionResult {
+func (c *Agent) ExecHelo() transaction.TransactionResult {
 	// We have connected to the MX, Say EHLO.
-	c._cmd.ExecEhlo(c.virtualMta.HostName)
+	c._cmd.ExecEhlo(c.virtualMta.VmtaHostName)
 	lines, _ := c._cmd.ReadAllLine()
 	if strings.HasPrefix(lines, "421") {
 		return transaction.ServiceNotAvalible
 	}
 	if !strings.HasPrefix(lines, "2") {
 		// If server didn't respond with a success code on EHLO then we should retry with HELO
-		_ = c._cmd.ExecHelo(c.virtualMta.HostName)
+		_ = c._cmd.ExecHelo(c.virtualMta.VmtaHostName)
 		lines, _ := c._cmd.ReadAllLine()
 		if !strings.HasPrefix(lines, "250") {
 			c._cmd.Close()
@@ -165,7 +165,7 @@ func (c *Agent) ExecHeloTLS() transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *Agent) ExecMailFromTLS(mailFrom string) transaction.TransactionResult {
+func (c *Agent) ExecMailFrom(mailFrom string) transaction.TransactionResult {
 	err := c._cmd.ExecMailFrom(mailFrom)
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -187,7 +187,7 @@ func (c *Agent) ExecMailFromTLS(mailFrom string) transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *Agent) ExecRcptToTLS(rcptTo string) transaction.TransactionResult {
+func (c *Agent) ExecRcptTo(rcptTo string) transaction.TransactionResult {
 	err := c._cmd.ExecRcptTo(rcptTo)
 	if err != nil {
 		if opError, ok := err.(*net.OpError); ok {
@@ -206,7 +206,7 @@ func (c *Agent) ExecRcptToTLS(rcptTo string) transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *Agent) ExecDataTLS(data string) transaction.TransactionResult {
+func (c *Agent) ExecData(data string) transaction.TransactionResult {
 	// Data response or Mail From if pipelining
 	err := c._cmd.ExecDataCommand()
 	if err != nil {
@@ -257,10 +257,10 @@ func (c *Agent) ExecDataTLS(data string) transaction.TransactionResult {
 	return transaction.Success
 }
 
-func (c *Agent) ExecRsetTLS() transaction.TransactionResult {
+func (c *Agent) ExecRset() transaction.TransactionResult {
 	return transaction.RetryRequired
 }
 
-func (c *Agent) ExecQuitTLS() transaction.TransactionResult {
+func (c *Agent) ExecQuit() transaction.TransactionResult {
 	return transaction.RetryRequired
 }
