@@ -88,13 +88,12 @@ func (consumer *InboundStagingConsumer) Run() {
 						msg.Data = string(b.Bytes())
 					}
 				}
-				data, err := json.Marshal(msg)
 				if false {
 					logger.Infof("XXX%s", cross.NewLine)
-					err = queue.Instance().EnqueueOutbound(data)
+					err = queue.Instance().EnqueueOutboundMultiple(msg)
 				} else {
 					logger.Infof("YYY%s", cross.NewLine)
-					err = queue.Instance().EnqueueOutboundNormal(data)
+					err = queue.Instance().EnqueueOutboundNormal(msg)
 				}
 
 				if err == nil {

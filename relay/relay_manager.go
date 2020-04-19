@@ -60,7 +60,7 @@ func (r *Manager) SendMessage(outboundMessage *amqp.Delivery) {
 		if result.ResultMessage[0] == '5' {
 			bounce.Handler().HandleFailedToSend(pureMessage, result)
 		} else {
-			bounce.Handler().HandleDeferralToSend(pureMessage, result)
+			bounce.Handler().HandleDeferralToSend(pureMessage, result, -1)
 		}
 	case transaction.MaxMessages:
 		bounce.Handler().HandleThrottleToSend(pureMessage, result)

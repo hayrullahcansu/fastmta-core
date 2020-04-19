@@ -5,7 +5,6 @@ import (
 
 	"github.com/hayrullahcansu/fastmta-core/mta"
 	"github.com/hayrullahcansu/fastmta-core/rabbit"
-	"github.com/hayrullahcansu/zetamail/queue"
 )
 
 // SMTPServer connects to target and relays messages
@@ -20,7 +19,7 @@ type SMTPServer struct {
 
 // NewSMTPServer returns new instance of SMTPServer
 func NewSMTPServer(vmta *mta.VirtualMta) *SMTPServer {
-	client := queue.New()
+	client := rabbit.New()
 	client.Connect(true)
 
 	return &SMTPServer{

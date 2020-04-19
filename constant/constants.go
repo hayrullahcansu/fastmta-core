@@ -23,8 +23,10 @@ const (
 )
 
 const (
-	ReadDeadLine  = time.Second * time.Duration(30)
-	WriteDeadLine = time.Second * time.Duration(30)
-	MtaName       = "ZetaMail"
-	MaxErrorLimit = 10
+	ReadDeadLine         = time.Second * time.Duration(30)
+	WriteDeadLine        = time.Second * time.Duration(30)
+	MtaName              = "ZetaMail"
+	MaxErrorLimit        = 10
+	MaxRetryInterval     = 3 * 60
+	DefaultRetryInterval = 10
 )

@@ -10,6 +10,7 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/rabbit"
+	"github.com/hayrullahcansu/fastmta-core/relay"
 )
 
 type OutboundConsumerMultipleSender struct {
@@ -38,7 +39,7 @@ func (consumer *OutboundConsumerMultipleSender) Run() {
 				if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 					//exchange.InstanceRouter().
 				}
-				// core.InstanceBulkSender().AppendMessage(pureMessage.Host, pureMessage)
+				go relay.InstanceManager().SendMessage(&outboundMessage)
 				logger.Infof("queued message to send %s", pureMessage.RcptTo)
 
 				outboundMessage.Ack(false)

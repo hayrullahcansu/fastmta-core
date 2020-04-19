@@ -1,3 +1,6 @@
 package cross
 
-const NewLine = "\n"
+const (
+	NewLine = "\n"
+	CLRF    = "\r\n"
+)

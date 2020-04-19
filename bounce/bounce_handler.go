@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/queue/priority"
 
 	"github.com/hayrullahcansu/fastmta-core/entity"
@@ -60,11 +61,16 @@ func (h *BounceHandler) HandleFailedToConnect(message *entity.Message, result *t
 func (h *BounceHandler) HandleDeferralToSend(message *entity.Message, result *transaction.TransactionGroupResult, nextRetryIntervalMinutes int) {
 	logger.Warningf("Deliver deferral to send messsage to %s", message.RcptTo)
 	message.DeferredCount++
-	var nextRetryInterval int = 0
+	var nextRetryInterval int = constant.DefaultRetryInterval
 	if nextRetryIntervalMinutes > 0 {
 		nextRetryInterval = nextRetryIntervalMinutes
 	} else {
-		nextRetryInterval = int(math.Pow(float64(nextRetryIntervalMinutes*2), float64(message.DeferredCount)))
+		// Increase the deferred wait interval by doubling for each retry.
+		nextRetryInterval = int(math.Pow(2, float64(message.DeferredCount)) * float64(nextRetryInterval))
+		// If we reach over the max interval then set to the max interval value.
+		if nextRetryInterval > constant.MaxRetryInterval {
+			nextRetryInterval = constant.MaxRetryInterval
+		}
 	}
 	message.AttemptSendTime = time.Now().Add(time.Duration(nextRetryInterval) * time.Minute)
 	queue.Instance().EnqueueOutboundNormal(message)
