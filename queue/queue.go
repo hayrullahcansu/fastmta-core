@@ -9,6 +9,7 @@ import (
 var instanceClient *rabbit.RabbitMqClient
 var once sync.Once
 
+//Instance returns new or existing instance of RabbitMQClient
 func Instance() *rabbit.RabbitMqClient {
 	once.Do(func() {
 		instanceClient = newClient()

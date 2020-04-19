@@ -39,7 +39,7 @@ func main() {
 	// 		}
 	// 	}
 	// 	//TODO: define all error like dnsError
-	// 	return false, transaction.ServiceNotAvalible, "service not avaliable"
+	// 	return false, transaction.ServiceNotAvailable, "service not avaliable"
 	// }
 
 	// load command line arguments

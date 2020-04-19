@@ -74,7 +74,7 @@ func (c *Agent) SendMessage(message *entity.Message) (bool, *transaction.Transac
 	// Check we get a valid banner.
 	if !strings.HasPrefix(lines, "2") {
 		if strings.HasPrefix(lines, "421") {
-			result.TransactionResult = transaction.ServiceNotAvalible
+			result.TransactionResult = transaction.ServiceNotAvailable
 			result.ResultMessage = lines
 			return true, result
 		}
@@ -133,7 +133,7 @@ func (c *Agent) Connect(domain *dns.Domain) (bool, transaction.TransactionResult
 			}
 		}
 		//TODO: define all error like dnsError
-		return false, transaction.ServiceNotAvalible, "service not avaliable"
+		return false, transaction.ServiceNotAvailable, "service not avaliable"
 	}
 
 	c._cmd = cmd.NewSmtpCommander(c.dialer.GetTransporter())
@@ -145,7 +145,7 @@ func (c *Agent) ExecHelo() transaction.TransactionResult {
 	c._cmd.ExecEhlo(c.virtualMta.VmtaHostName)
 	lines, _ := c._cmd.ReadAllLine()
 	if strings.HasPrefix(lines, "421") {
-		return transaction.ServiceNotAvalible
+		return transaction.ServiceNotAvailable
 	}
 	if !strings.HasPrefix(lines, "2") {
 		// If server didn't respond with a success code on EHLO then we should retry with HELO
@@ -153,7 +153,7 @@ func (c *Agent) ExecHelo() transaction.TransactionResult {
 		lines, _ := c._cmd.ReadAllLine()
 		if !strings.HasPrefix(lines, "250") {
 			c._cmd.Close()
-			return transaction.ServiceNotAvalible
+			return transaction.ServiceNotAvailable
 		}
 	} else {
 		// Server responded to EHLO
@@ -173,13 +173,13 @@ func (c *Agent) ExecMailFrom(mailFrom string) transaction.TransactionResult {
 				return transaction.Timeout
 			}
 		}
-		return transaction.ServiceNotAvalible
+		return transaction.ServiceNotAvailable
 	}
 	if !c.canPipeLining {
 		lines, _ := c._cmd.ReadAllLine()
 		if !strings.HasPrefix(lines, "250") {
 			if strings.HasPrefix(lines, "421") {
-				return transaction.ServiceNotAvalible
+				return transaction.ServiceNotAvailable
 			}
 			return transaction.RejectedByRemoteServer
 		}
@@ -195,7 +195,7 @@ func (c *Agent) ExecRcptTo(rcptTo string) transaction.TransactionResult {
 				return transaction.Timeout
 			}
 		}
-		return transaction.ServiceNotAvalible
+		return transaction.ServiceNotAvailable
 	}
 	if !c.canPipeLining {
 		lines, _ := c._cmd.ReadAllLine()
@@ -215,7 +215,7 @@ func (c *Agent) ExecData(data string) transaction.TransactionResult {
 				return transaction.Timeout
 			}
 		}
-		return transaction.ServiceNotAvalible
+		return transaction.ServiceNotAvailable
 	}
 	lines, _ := c._cmd.ReadAllLine()
 	// If the remote MX supports pipelining then we need to check the MAIL FROM and RCPT to responses.
@@ -248,7 +248,7 @@ func (c *Agent) ExecData(data string) transaction.TransactionResult {
 				return transaction.Timeout
 			}
 		}
-		return transaction.ServiceNotAvalible
+		return transaction.ServiceNotAvailable
 	}
 	lines, _ = c._cmd.ReadAllLine()
 	if !strings.HasPrefix(lines, "250") {

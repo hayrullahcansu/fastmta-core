@@ -12,6 +12,7 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/global"
 	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/queue/priority"
 	"github.com/streadway/amqp"
 )
 
@@ -95,7 +96,7 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 					break
 				case message, ok := <-notifyReturn:
 					if ok && client.IsConnected {
-						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body)
+						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body, priority.LOW)
 						if err != nil {
 							logger.Infof("RabbitMqClient returned Message cant publish: %s%s", err, cross.NewLine)
 						}
@@ -139,7 +140,7 @@ func (client *RabbitMqClient) ExchangeDeclare(name string, durable bool, autoDel
 	)
 }
 
-func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandatory bool, immediate bool, data []byte) error {
+func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandatory bool, immediate bool, data []byte, priority priority.Priority) error {
 	return client.Channel.Publish(
 		exchange,   // exchange
 		routingKey, // routing key
@@ -148,6 +149,7 @@ func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandat
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        data,
+			Priority:    uint8(priority),
 		})
 }
 
@@ -166,32 +168,47 @@ func (client *RabbitMqClient) Close() {
 	client.Conn.Close()
 }
 
-func (client *RabbitMqClient) EnqueueInbound(data []byte) error {
+func (client *RabbitMqClient) EnqueueInbound(message *entity.InboundMessage) error {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
 	return client.Publish(
 		"",
 		constant.InboundQueueName,
 		false,
 		false,
 		data,
+		message.Priority,
 	)
 }
-func (client *RabbitMqClient) EnqueueInboundStaging(data []byte) error {
+func (client *RabbitMqClient) EnqueueInboundStaging(message *entity.Message) error {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
 	return client.Publish(
 		"",
 		constant.InboundStagingQueueName,
 		false,
 		false,
 		data,
+		message.Priority,
 	)
 }
 
-func (client *RabbitMqClient) EnqueueOutboundMultiple(data []byte) error {
+func (client *RabbitMqClient) EnqueueOutboundMultiple(message *entity.Message) error {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
 	return client.Publish(
 		"",
 		constant.OutboundMultipleQueueName,
 		false,
 		false,
 		data,
+		message.Priority,
 	)
 }
 
@@ -220,5 +237,6 @@ func (client *RabbitMqClient) EnqueueOutboundNormal(message *entity.Message) err
 		false,
 		false,
 		data,
+		message.Priority,
 	)
 }

@@ -5,7 +5,7 @@ type TransactionResult int
 const (
 	Success TransactionResult = iota + 1
 	FailedToConnect
-	ServiceNotAvalible
+	ServiceNotAvailable
 	RejectedByRemoteServer
 	RetryRequired
 	HostNotFound

@@ -1,7 +1,6 @@
 package in
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -238,12 +237,9 @@ func (server *SmtpServer) InboundHandler(conn net.Conn) {
 }
 
 func AppendMessage(server *SmtpServer, message *entity.InboundMessage) (bool, error) {
-	data, err := json.Marshal(message)
+	err := queue.Instance().EnqueueInbound(message)
 	if err == nil {
-		err = queue.Instance().EnqueueInbound(data)
-		if err == nil {
-			return true, err
-		}
+		return true, err
 	}
 	return false, err
 }

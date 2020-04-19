@@ -8,7 +8,8 @@ import (
 	"github.com/hayrullahcansu/zetamail/queue"
 )
 
-type RelaySmtpServer struct {
+// SMTPServer connects to target and relays messages
+type SMTPServer struct {
 	ID             string
 	VMta           *mta.VirtualMta
 	VmtaHostName   string
@@ -17,11 +18,12 @@ type RelaySmtpServer struct {
 	rabbitMqClient *rabbit.RabbitMqClient
 }
 
-func RelaySmtpServer(vmta *mta.VirtualMta) *RelaySmtpServer {
+// NewSMTPServer returns new instance of SMTPServer
+func NewSMTPServer(vmta *mta.VirtualMta) *SMTPServer {
 	client := queue.New()
 	client.Connect(true)
 
-	return &RelaySmtpServer{
+	return &SMTPServer{
 		ID:             "",
 		VMta:           vmta,
 		VmtaHostName:   vmta.VmtaHostName,

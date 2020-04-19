@@ -16,18 +16,22 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/rabbit"
 )
 
+// InboundConsumer struct that includes RabbitMQClient
 type InboundConsumer struct {
 	conn *amqp.Connection
 	ch   *amqp.Channel
 	q    chan bool
 }
 
+// NewInboundConsumer provides to get Inbound messages from the queue.
+// It checks recipients the messages and creates entity.Message for each recipient
 func NewInboundConsumer() *InboundConsumer {
 	return &InboundConsumer{
 		q: make(chan bool),
 	}
 }
 
+// Run starts consuming from the queue
 func (consumer *InboundConsumer) Run() {
 	conn, err := amqp.Dial(rabbit.NewRabbitMqDialString())
 	if err != nil {
@@ -44,7 +48,7 @@ func (consumer *InboundConsumer) Run() {
 			if ok {
 				pureMessage := &entity.InboundMessage{}
 				json.Unmarshal(inboundMessage.Body, pureMessage)
-				logger.Infof("Recieved message From %s", constant.InboundQueueName)
+				logger.Infof("Received message From %s", constant.InboundQueueName)
 				for i := 0; i < len(pureMessage.RcptTo); i++ {
 					msg := &entity.Message{
 						MessageID: uuid.New().String(),
@@ -54,11 +58,7 @@ func (consumer *InboundConsumer) Run() {
 						RcptTo:    string(pureMessage.RcptTo[i]),
 						Host:      string(pureMessage.RcptTo[i][strings.LastIndex(pureMessage.RcptTo[i], "@")+1:]),
 					}
-					data, err := json.Marshal(msg)
-					if err == nil {
-						queue.Instance().EnqueueInboundStaging(data)
-					}
-
+					queue.Instance().EnqueueInboundStaging(msg)
 				}
 				inboundMessage.Ack(false)
 			}
@@ -68,6 +68,7 @@ func (consumer *InboundConsumer) Run() {
 	}
 }
 
+// Stop consuming from the queue
 func (consumer *InboundConsumer) Stop() {
 	consumer.q <- true
 }

@@ -11,16 +11,20 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/relay"
 )
 
+// OutboundConsumerNormalSender struct that includes RabbitMQClient
 type OutboundConsumerNormalSender struct {
 	RabbitMqClient *rabbit.RabbitMqClient
 }
 
+// NewOutboundConsumerNormalSender provides to get Outbound messages from the queue.
+// It checks rules the messages and relays to target via agent
 func NewOutboundConsumerNormalSender() *OutboundConsumerNormalSender {
 	return &OutboundConsumerNormalSender{
 		RabbitMqClient: rabbit.New(),
 	}
 }
 
+// Run starts consuming from the queue
 func (consumer *OutboundConsumerNormalSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
 	ch, err := consumer.RabbitMqClient.Consume(constant.OutboundNormalQueueName, "", false, false, true, nil)
@@ -32,7 +36,7 @@ func (consumer *OutboundConsumerNormalSender) Run() {
 		case outboundMessage, ok := <-ch:
 			if ok {
 				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Infof("Recieved message From %s", constant.OutboundNormalQueueName)
+				logger.Infof("Received message From %s", constant.OutboundNormalQueueName)
 				// if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 				//exchange.InstanceRouter().
 				// }
@@ -44,6 +48,8 @@ func (consumer *OutboundConsumerNormalSender) Run() {
 		}
 	}
 }
+
+// Stop consuming from the queue
 func (consumer *OutboundConsumerNormalSender) Stop() {
 	consumer.RabbitMqClient.Close()
 }
