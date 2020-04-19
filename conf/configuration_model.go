@@ -4,6 +4,7 @@ package conf
 type Config struct {
 	Test        int            `json:"test"`
 	IPAddresses []VirtualMta   `json:"ip_addressess"`
+	Ports       []int          `json:"ports"`
 	RabbitMq    RabbitMqConfig `json:"rabbitmq"`
 }
 
@@ -13,6 +14,7 @@ type VirtualMta struct {
 	HostName string `json:"hostname"`
 	Inbound  bool   `json:"inbound"`
 	Outbound bool   `json:"outbound"`
+	GroupId  int    `json:"group_id"`
 }
 
 //RabbitMqConfig is rabbitmq configuration to connect

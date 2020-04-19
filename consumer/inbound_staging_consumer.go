@@ -1,4 +1,4 @@
-package core
+package consumer
 
 import (
 	"bytes"
@@ -11,10 +11,12 @@ import (
 
 	dkim "github.com/emersion/go-dkim"
 	"github.com/hayrullahcansu/fastmta-core/caching"
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	OS "github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/rabbit"
 )
 
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
@@ -48,20 +50,20 @@ func init() {
 }
 
 type InboundStagingConsumer struct {
-	RabbitMqClient *queue.RabbitMqClient
+	RabbitMqClient *rabbit.RabbitMqClient
 }
 
 func NewInboundStagingConsumer() *InboundStagingConsumer {
 	return &InboundStagingConsumer{
-		RabbitMqClient: queue.New(),
+		RabbitMqClient: rabbit.New(),
 	}
 }
 
 func (consumer *InboundStagingConsumer) Run() {
 	consumer.RabbitMqClient.Connect(true)
-	messageChannel, err := consumer.RabbitMqClient.Consume(queue.InboundStagingQueueName, "", false, false, true, nil)
+	messageChannel, err := consumer.RabbitMqClient.Consume(constant.InboundStagingQueueName, "", false, false, true, nil)
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundStagingQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", constant.InboundStagingQueueName, err, OS.NewLine))
 	}
 
 	for {
@@ -70,7 +72,7 @@ func (consumer *InboundStagingConsumer) Run() {
 			if ok {
 				msg := &entity.Message{}
 				json.Unmarshal(messageDelivery.Body, msg)
-				logger.Infof("Recieved message From %s", queue.InboundStagingQueueName)
+				logger.Infof("Recieved message From %s", constant.InboundStagingQueueName)
 				d, ok := caching.InstanceDkim().C.Get(msg.Host)
 				if ok {
 					dkimmer, ok := d.(entity.Dkimmer)
@@ -84,24 +86,12 @@ func (consumer *InboundStagingConsumer) Run() {
 					}
 				}
 				data, err := json.Marshal(msg)
-				if true {
+				if false {
 					logger.Infof("XXX%s", OS.NewLine)
-					err = consumer.RabbitMqClient.Publish(
-						queue.OutboundExchange,
-						queue.RoutingKeyOutboundMultiple,
-						false,
-						false,
-						data,
-					)
+					err = queue.Instance().EnqueueOutbound(data)
 				} else {
 					logger.Infof("YYY%s", OS.NewLine)
-					err = consumer.RabbitMqClient.Publish(
-						queue.OutboundExchange,
-						queue.RoutingKeyOutboundNormal,
-						false,
-						false,
-						data,
-					)
+					err = queue.Instance().EnqueueOutboundNormal(data)
 				}
 
 				if err == nil {

@@ -1,28 +1,31 @@
 package boss
 
 import (
+	"github.com/hayrullahcansu/fastmta-core/consumer"
 	"github.com/hayrullahcansu/fastmta-core/core"
 	"github.com/hayrullahcansu/fastmta-core/global"
+	"github.com/hayrullahcansu/fastmta-core/in"
+	"github.com/hayrullahcansu/fastmta-core/mta"
 )
 
 type Boss struct {
-	VirtualMtas              []*core.VirtualMta
-	InboundMtas              []*core.InboundSmtpServer
-	InboundConsumer          *core.InboundConsumer
-	InboundStagingConsumer   *core.InboundStagingConsumer
-	OutboundConsumerMultiple *core.OutboundConsumerMultipleSender
-	OutboundConsumerNormal   *core.OutboundConsumerNormalSender
+	VirtualMtas              []*mta.VirtualMta
+	InboundMtas              []*in.SmtpServer
+	InboundConsumer          *consumer.InboundConsumer
+	InboundStagingConsumer   *consumer.InboundStagingConsumer
+	OutboundConsumerMultiple *consumer.OutboundConsumerMultipleSender
+	OutboundConsumerNormal   *consumer.OutboundConsumerNormalSender
 	Router                   *core.Router
 }
 
 func New() *Boss {
 	boss := &Boss{
-		VirtualMtas:              make([]*core.VirtualMta, 0),
-		InboundMtas:              make([]*core.InboundSmtpServer, 0),
-		InboundConsumer:          core.NewInboundConsumer(),
-		InboundStagingConsumer:   core.NewInboundStagingConsumer(),
-		OutboundConsumerNormal:   core.NewOutboundConsumerNormalSender(),
-		OutboundConsumerMultiple: core.NewOutboundConsumerMultipleSender(),
+		VirtualMtas:              make([]*mta.VirtualMta, 0),
+		InboundMtas:              make([]*in.SmtpServer, 0),
+		InboundConsumer:          consumer.NewInboundConsumer(),
+		InboundStagingConsumer:   consumer.NewInboundStagingConsumer(),
+		OutboundConsumerNormal:   consumer.NewOutboundConsumerNormalSender(),
+		OutboundConsumerMultiple: consumer.NewOutboundConsumerMultipleSender(),
 		Router:                   core.InstanceRouter(),
 	}
 	return boss
@@ -30,11 +33,13 @@ func New() *Boss {
 
 func (boss *Boss) Run() {
 	for _, vmta := range global.StaticConfig.IPAddresses {
-		vm := core.CreateNewVirtualMta(vmta.IP, vmta.HostName, 26, vmta.Inbound, vmta.Outbound, false)
-		boss.VirtualMtas = append(boss.VirtualMtas, vm)
-		inboundServer := core.CreateNewInboundSmtpServer(vm)
-		boss.InboundMtas = append(boss.InboundMtas, inboundServer)
-		go inboundServer.Run()
+		for _, port := range global.StaticConfig.Ports {
+			vm := mta.CreateNewVirtualMta(vmta.IP, vmta.HostName, port, vmta.GroupId, vmta.Inbound, vmta.Outbound, false)
+			boss.VirtualMtas = append(boss.VirtualMtas, vm)
+			inboundServer := in.CreateNewSmtpServer(vm)
+			boss.InboundMtas = append(boss.InboundMtas, inboundServer)
+			go inboundServer.Run()
+		}
 	}
 	go core.InstanceBulkSender().Run()
 	go boss.InboundConsumer.Run()

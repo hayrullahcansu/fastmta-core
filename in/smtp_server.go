@@ -1,6 +1,7 @@
-package core
+package in
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -8,26 +9,65 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
+	"github.com/hayrullahcansu/fastmta-core/mta"
+	"github.com/hayrullahcansu/fastmta-core/queue"
 	"github.com/hayrullahcansu/fastmta-core/smtp/cmd"
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 )
 
-const (
-	ReadDeadLine  = time.Second * time.Duration(30)
-	WriteDeadLine = time.Second * time.Duration(30)
-	MtaName       = "ZetaMail"
-	MaxErrorLimit = 10
-)
+type SmtpServer struct {
+	ID           string
+	VMta         *mta.VirtualMta
+	VmtaHostName string
+	VmtaIPAddr   *net.IPAddr
+	Port         int
+}
 
-func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
+func CreateNewSmtpServer(vmta *mta.VirtualMta) *SmtpServer {
+	return &SmtpServer{
+		ID:           "",
+		VMta:         vmta,
+		VmtaHostName: vmta.VmtaHostName,
+		VmtaIPAddr:   vmta.VmtaIPAddr,
+		Port:         vmta.Port,
+	}
+}
+
+func (smtpServer *SmtpServer) Run() {
+	mergedAddress := fmt.Sprintf("%s:%d", smtpServer.VMta.IPAddressString, smtpServer.Port)
+	listener, err := net.Listen("tcp", mergedAddress)
+
+	//TODO: implement TLS inbound
+	// tls.Listen("tcp", mergedAddress,)
+
+	if err != nil {
+		panic(fmt.Sprintf("%s Can't listen inbound %s", mergedAddress, err))
+		//LOG
+	}
+	logger.Infof("%s Listening%s", mergedAddress, cross.NewLine)
+	defer listener.Close()
+	for {
+		// Listen for an incoming connection.
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Error accepting: ", err.Error())
+			//LOG
+		}
+		// Handle inbound connections in a new goroutine.
+		go smtpServer.InboundHandler(conn)
+	}
+}
+
+func (server *SmtpServer) InboundHandler(conn net.Conn) {
 	defer conn.Close()
 	t := rw.NewNoTLSTransporter(conn)
 	_cmd := cmd.NewSmtpCommander(t)
 
-	err := _cmd.SmtpReady(server.VmtaHostName, MtaName)
+	err := _cmd.SmtpReady(server.VmtaHostName, server.VmtaHostName)
 	if err != nil {
 	}
 	errorCounter := 0
@@ -48,7 +88,7 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 			err = _cmd.EmptyCommand()
 			continue
 		}
-		if errorCounter >= MaxErrorLimit {
+		if errorCounter >= constant.MaxErrorLimit {
 			_ = _cmd.ErrorLimitExceed(server.VmtaHostName)
 			break
 		}
@@ -195,4 +235,15 @@ func InboundHandler(server *InboundSmtpServer, conn net.Conn) {
 		continue
 	}
 
+}
+
+func AppendMessage(server *SmtpServer, message *entity.InboundMessage) (bool, error) {
+	data, err := json.Marshal(message)
+	if err == nil {
+		err = queue.Instance().EnqueueInbound(data)
+		if err == nil {
+			return true, err
+		}
+	}
+	return false, err
 }

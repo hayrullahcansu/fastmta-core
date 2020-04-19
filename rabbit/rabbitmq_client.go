@@ -1,27 +1,18 @@
-package queue
+package rabbit
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
+	"time"
 
 	"github.com/hayrullahcansu/fastmta-core/conf"
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/global"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/streadway/amqp"
-)
-
-const (
-	InboundExchange            string = "fastmta_ex_inbound"
-	InboundStagingExchange     string = "fastmta_ex_inbound_staging"
-	OutboundExchange           string = "fastmta_ex_outbound"
-	RoutingKeyInbound          string = "inbound"
-	RoutingKeyInboundStaging   string = "inbound_staging"
-	RoutingKeyOutboundMultiple string = "outbound_multiple"
-	RoutingKeyOutboundNormal   string = "outbound_normal"
-	InboundQueueName           string = "fastmta_inbound"
-	InboundStagingQueueName    string = "fastmta_inbound_staging"
-	OutboundMultipleQueueName  string = "fastmta_outbound_multiple"
-	OutboundNormalQueueName    string = "fastmta_outbound_normal"
 )
 
 type RabbitMqClient struct {
@@ -173,4 +164,61 @@ func (client *RabbitMqClient) Consume(queue string, consumerTag string, autoAck 
 func (client *RabbitMqClient) Close() {
 	client.Channel.Close()
 	client.Conn.Close()
+}
+
+func (client *RabbitMqClient) EnqueueInbound(data []byte) error {
+	return client.Publish(
+		"",
+		constant.InboundQueueName,
+		false,
+		false,
+		data,
+	)
+}
+func (client *RabbitMqClient) EnqueueInboundStaging(data []byte) error {
+	return client.Publish(
+		"",
+		constant.InboundStagingQueueName,
+		false,
+		false,
+		data,
+	)
+}
+
+func (client *RabbitMqClient) EnqueueOutboundMultiple(data []byte) error {
+	return client.Publish(
+		"",
+		constant.OutboundMultipleQueueName,
+		false,
+		false,
+		data,
+	)
+}
+
+func (client *RabbitMqClient) EnqueueOutboundNormal(message *entity.Message) error {
+	que := constant.OutboundNormalQueueName
+	dd := message.AttemptSendTime.Sub(time.Now()) / time.Second
+	diff := math.Ceil(float64(dd))
+	if diff > 0 {
+		if diff < 10 {
+			que = constant.OutboundWaiting1
+		} else if diff < 60 {
+			que = constant.OutboundWaiting10
+		} else if diff < 300 {
+			que = constant.OutboundWaiting60
+		} else {
+			que = constant.OutboundWaiting300
+		}
+	}
+	data, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+	return client.Publish(
+		"",
+		que,
+		false,
+		false,
+		data,
+	)
 }

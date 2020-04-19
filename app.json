@@ -1,19 +1,20 @@
 {
-    "test":1,
-    "ip_addressess":[
-        {
-            "ip":"127.0.0.1",
-            "hostname":"vmta1.localhost",
-            "inbound":true,
-            "outbound":true
-        }
-    ],
-    "rabbitmq":{
-        "host":"localhost",
-        "port":5672,
-        "username":"guest",
-        "password":"1",
-        "virtual_host":"",
-        "exchange_name":""
+  "test": 1,
+  "ip_addressess": [
+    {
+      "ip": "127.0.0.1",
+      "hostname": "vmta1.localhost",
+      "inbound": true,
+      "outbound": true
     }
+  ],
+  "ports": [25, 465, 587],
+  "rabbitmq": {
+    "host": "localhost",
+    "port": 5672,
+    "username": "guest",
+    "password": "1",
+    "virtual_host": "",
+    "exchange_name": ""
+  }
 }

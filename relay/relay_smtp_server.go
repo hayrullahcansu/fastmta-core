@@ -1,31 +1,32 @@
-package core
+package relay
 
 import (
 	"net"
 
 	"github.com/hayrullahcansu/fastmta-core/mta"
-	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/rabbit"
+	"github.com/hayrullahcansu/zetamail/queue"
 )
 
-type OutboundSmtpServer struct {
+type RelaySmtpServer struct {
 	ID             string
 	VMta           *mta.VirtualMta
 	VmtaHostName   string
 	VmtaIPAddr     *net.IPAddr
 	Port           int
-	RabbitMqClient *queue.RabbitMqClient
+	rabbitMqClient *rabbit.RabbitMqClient
 }
 
-func CreateNewOutboundSmtpServer(vmta *mta.VirtualMta) *OutboundSmtpServer {
+func RelaySmtpServer(vmta *mta.VirtualMta) *RelaySmtpServer {
 	client := queue.New()
 	client.Connect(true)
 
-	return &OutboundSmtpServer{
+	return &RelaySmtpServer{
 		ID:             "",
 		VMta:           vmta,
 		VmtaHostName:   vmta.VmtaHostName,
 		VmtaIPAddr:     vmta.VmtaIPAddr,
 		Port:           vmta.Port,
-		RabbitMqClient: client,
+		rabbitMqClient: client,
 	}
 }

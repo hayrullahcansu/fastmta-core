@@ -9,8 +9,8 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/smtp/cmd"
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 
-	"github.com/hayrullahcansu/fastmta-core/core/transaction"
 	"github.com/hayrullahcansu/fastmta-core/entity"
+	"github.com/hayrullahcansu/fastmta-core/transaction"
 )
 
 type Agent struct {

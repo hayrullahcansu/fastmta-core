@@ -1,31 +1,32 @@
-package core
+package consumer
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/hayrullahcansu/fastmta-core/caching"
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	OS "github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
-	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/rabbit"
 )
 
 type OutboundConsumerMultipleSender struct {
-	RabbitMqClient *queue.RabbitMqClient
+	RabbitMqClient *rabbit.RabbitMqClient
 }
 
 func NewOutboundConsumerMultipleSender() *OutboundConsumerMultipleSender {
 	return &OutboundConsumerMultipleSender{
-		RabbitMqClient: queue.New(),
+		RabbitMqClient: rabbit.New(),
 	}
 }
 
 func (consumer *OutboundConsumerMultipleSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
-	ch, err := consumer.RabbitMqClient.Consume(queue.OutboundMultipleQueueName, "", false, false, true, nil)
+	ch, err := consumer.RabbitMqClient.Consume(constant.OutboundMultipleQueueName, "", false, false, true, nil)
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.OutboundMultipleQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", constant.OutboundMultipleQueueName, err, OS.NewLine))
 	}
 	for {
 		select {
@@ -33,11 +34,11 @@ func (consumer *OutboundConsumerMultipleSender) Run() {
 			if ok {
 				pureMessage := &entity.Message{}
 				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Infof("Recieved message From %s", queue.OutboundMultipleQueueName)
+				logger.Infof("Recieved message From %s", constant.OutboundMultipleQueueName)
 				if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 					//exchange.InstanceRouter().
 				}
-				InstanceBulkSender().AppendMessage(pureMessage.Host, pureMessage)
+				// core.InstanceBulkSender().AppendMessage(pureMessage.Host, pureMessage)
 				logger.Infof("queued message to send %s", pureMessage.RcptTo)
 
 				outboundMessage.Ack(false)

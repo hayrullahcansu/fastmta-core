@@ -1,4 +1,4 @@
-package core
+package consumer
 
 import (
 	"encoding/json"
@@ -8,10 +8,12 @@ import (
 	"github.com/streadway/amqp"
 
 	"github.com/google/uuid"
+	"github.com/hayrullahcansu/fastmta-core/constant"
 	OS "github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/rabbit"
 )
 
 type InboundConsumer struct {
@@ -27,12 +29,12 @@ func NewInboundConsumer() *InboundConsumer {
 }
 
 func (consumer *InboundConsumer) Run() {
-	conn, err := amqp.Dial(queue.NewRabbitMqDialString())
+	conn, err := amqp.Dial(rabbit.NewRabbitMqDialString())
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", queue.InboundQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", constant.InboundQueueName, err, OS.NewLine))
 	}
 	ch, err := conn.Channel()
-	deliveries, err := ch.Consume(queue.InboundQueueName, "", false, false, true, false, nil)
+	deliveries, err := ch.Consume(constant.InboundQueueName, "", false, false, true, false, nil)
 	if err != nil {
 
 	}
@@ -42,7 +44,7 @@ func (consumer *InboundConsumer) Run() {
 			if ok {
 				pureMessage := &entity.InboundMessage{}
 				json.Unmarshal(inboundMessage.Body, pureMessage)
-				logger.Infof("Recieved message From %s", queue.InboundQueueName)
+				logger.Infof("Recieved message From %s", constant.InboundQueueName)
 				for i := 0; i < len(pureMessage.RcptTo); i++ {
 					msg := &entity.Message{
 						MessageID: uuid.New().String(),
@@ -54,16 +56,7 @@ func (consumer *InboundConsumer) Run() {
 					}
 					data, err := json.Marshal(msg)
 					if err == nil {
-						ch.Publish(
-							queue.InboundStagingExchange,
-							queue.RoutingKeyInboundStaging,
-							false,
-							false,
-							amqp.Publishing{
-								ContentType: "text/plain",
-								Body:        data,
-							},
-						)
+						queue.Instance().EnqueueInboundStaging(data)
 					}
 
 				}

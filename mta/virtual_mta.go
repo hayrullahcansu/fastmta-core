@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 	"sync"
-
-	"github.com/hayrullahcansu/fastmta-core/global"
 )
 
 var Pool *VMtaPool
@@ -27,6 +25,7 @@ type VirtualMta struct {
 	IPAddressString            string
 	VmtaHostName               string
 	VmtaIPAddr                 *net.IPAddr
+	GroupId                    int
 	Port                       int
 	IsSmtpInbound              bool
 	IsSmtpOutbound             bool
@@ -35,37 +34,8 @@ type VirtualMta struct {
 	ConcurrentConnectionNumber int
 }
 
-func InstancePool() *VMtaPool {
-	poolOnce.Do(func() {
-		Pool = newVMtaPool()
-	})
-	return Pool
-}
-
-func (v *VMtaPool) GetVMtA() *VirtualMta {
-	v.m.Lock()
-	defer func() {
-		counter++
-		v.m.Unlock()
-	}()
-	return v.virtualMtas[counter%len(v.virtualMtas)]
-}
-
-func newVMtaPool() *VMtaPool {
-	_pool := &VMtaPool{
-		m:           &sync.Mutex{},
-		virtualMtas: make([]*VirtualMta, 0),
-		rules:       make([]*Rule, 0),
-	}
-	for _, vmta := range global.StaticConfig.IPAddresses {
-		vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, 25, vmta.Inbound, vmta.Outbound, false)
-		_pool.virtualMtas = append(_pool.virtualMtas, vm)
-	}
-	return _pool
-}
-
 //CreateNewVirtualMta creates new dto
-func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, isOutbound bool, tls bool) *VirtualMta {
+func CreateNewVirtualMta(ip string, hostname string, port int, groupId int, isInbound bool, isOutbound bool, tls bool) *VirtualMta {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		panic(fmt.Sprintf("%s given ip address cant parsing", ip))
@@ -82,6 +52,7 @@ func CreateNewVirtualMta(ip string, hostname string, port int, isInbound bool, i
 		IsSmtpOutbound:  isOutbound,
 		LocalPort:       0,
 		TLS:             tls,
+		GroupId:         groupId,
 	}
 	if port == 25 {
 		vm.TLS = false

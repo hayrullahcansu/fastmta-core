@@ -13,11 +13,12 @@ import (
 	"github.com/emersion/go-dkim"
 	"github.com/hayrullahcansu/fastmta-core/caching"
 	"github.com/hayrullahcansu/fastmta-core/conf"
-	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/constant"
+	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/global"
 	"github.com/hayrullahcansu/fastmta-core/logger"
-	"github.com/hayrullahcansu/fastmta-core/queue"
+	"github.com/hayrullahcansu/fastmta-core/rabbit"
 	"github.com/patrickmn/go-cache"
 	"github.com/streadway/amqp"
 )
@@ -70,7 +71,7 @@ func dbEnsureCreated() {
 }
 
 func defineRabbitMqEnvironment() {
-	conn, err := amqp.Dial(queue.NewRabbitMqDialString())
+	conn, err := amqp.Dial(rabbit.NewRabbitMqDialString())
 	if err != nil {
 		//FIXME: Send signal to main process to kill
 		panic(err)
@@ -82,32 +83,81 @@ func defineRabbitMqEnvironment() {
 		panic(err)
 	}
 	defer ch.Close()
-	err = ch.ExchangeDeclare(queue.InboundExchange, "direct", true, false, false, false, nil)
-	err = ch.ExchangeDeclare(queue.InboundStagingExchange, "direct", true, false, false, false, nil)
-	err = ch.ExchangeDeclare(queue.OutboundExchange, "direct", true, false, false, false, nil)
-	err = ch.ExchangeDeclare(queue.OutboundExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(constant.InboundExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(constant.InboundStagingExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(constant.OutboundExchange, "direct", true, false, false, false, nil)
+	err = ch.ExchangeDeclare(constant.WaitingExchange, "direct", true, false, false, false, nil)
 
-	_, err = ch.QueueDeclare(queue.InboundQueueName, true, false, false, false, nil)
-	_, err = ch.QueueDeclare(queue.InboundStagingQueueName, true, false, false, false, nil)
-	_, err = ch.QueueDeclare(queue.OutboundNormalQueueName, true, false, false, false, nil)
-	_, err = ch.QueueDeclare(queue.OutboundMultipleQueueName, true, false, false, false, nil)
+	_, err = ch.QueueDeclare(constant.InboundQueueName, true, false, false, false,
+		amqp.Table{
+			"x-max-priority": 3,
+			"x-queue-mode":   "lazy",
+		})
+	_, err = ch.QueueDeclare(constant.InboundStagingQueueName, true, false, false, false,
+		amqp.Table{
+			"x-max-priority": 3,
+			"x-queue-mode":   "lazy",
+		})
+	_, err = ch.QueueDeclare(constant.OutboundNormalQueueName, true, false, false, false,
+		amqp.Table{
+			"x-max-priority": 3,
+			"x-queue-mode":   "lazy",
+		})
+	_, err = ch.QueueDeclare(constant.OutboundMultipleQueueName, true, false, false, false,
+		amqp.Table{
+			"x-max-priority": 3,
+			"x-queue-mode":   "lazy",
+		})
+	_, err = ch.QueueDeclare(constant.OutboundWaiting1, true, false, false, false,
+		amqp.Table{
+			"x-max-priority":            3,
+			"x-queue-mode":              "lazy",
+			"x-dead-letter-exchange":    constant.WaitingExchange,
+			"x-dead-letter-routing-key": constant.RoutingKeyWaiting,
+			"x-message-ttl":             1 * 1000,
+		})
+	_, err = ch.QueueDeclare(constant.OutboundWaiting10, true, false, false, false,
+		amqp.Table{
+			"x-max-priority":            3,
+			"x-queue-mode":              "lazy",
+			"x-dead-letter-exchange":    constant.WaitingExchange,
+			"x-dead-letter-routing-key": constant.RoutingKeyWaiting,
+			"x-message-ttl":             10 * 1000,
+		})
+	_, err = ch.QueueDeclare(constant.OutboundWaiting60, true, false, false, false,
+		amqp.Table{
+			"x-max-priority":            3,
+			"x-queue-mode":              "lazy",
+			"x-dead-letter-exchange":    constant.WaitingExchange,
+			"x-dead-letter-routing-key": constant.RoutingKeyWaiting,
+			"x-message-ttl":             60 * 1000,
+		})
+	_, err = ch.QueueDeclare(constant.OutboundWaiting300, true, false, false, false,
+		amqp.Table{
+			"x-max-priority":            3,
+			"x-queue-mode":              "lazy",
+			"x-dead-letter-exchange":    constant.WaitingExchange,
+			"x-dead-letter-routing-key": constant.RoutingKeyWaiting,
+			"x-message-ttl":             300 * 1000,
+		})
 
-	err = ch.QueueBind(queue.InboundQueueName, queue.RoutingKeyInbound, queue.InboundExchange, false, nil)
+	// err = ch.QueueBind(constant.InboundQueueName, constant.RoutingKeyInbound, constant.InboundExchange, false, nil)
 	fmt.Println(err)
-	err = ch.QueueBind(queue.InboundStagingQueueName, queue.RoutingKeyInboundStaging, queue.InboundStagingExchange, false, nil)
+	// err = ch.QueueBind(constant.InboundStagingQueueName, constant.RoutingKeyInboundStaging, constant.InboundStagingExchange, false, nil)
 	fmt.Println(err)
-	err = ch.QueueBind(queue.OutboundNormalQueueName, queue.RoutingKeyOutboundNormal, queue.OutboundExchange, false, nil)
+	// err = ch.QueueBind(constant.OutboundNormalQueueName, constant.RoutingKeyOutboundNormal, constant.OutboundExchange, false, nil)
 	fmt.Println(err)
-	err = ch.QueueBind(queue.OutboundMultipleQueueName, queue.RoutingKeyOutboundMultiple, queue.OutboundExchange, false, nil)
+	// err = ch.QueueBind(constant.OutboundMultipleQueueName, constant.RoutingKeyOutboundMultiple, constant.OutboundExchange, false, nil)
 	fmt.Println(err)
-
+	err = ch.QueueBind(constant.OutboundNormalQueueName, constant.RoutingKeyWaiting, constant.WaitingExchange, false, nil)
+	fmt.Println(err)
 }
 
 func loadDomainCache() {
 	domainCacher := caching.InstanceDomain()
 	db, err := entity.GetDbContext()
 	if err != nil {
-		panic(fmt.Sprintf("Db cant open. %s%s", err, OS.NewLine))
+		panic(fmt.Sprintf("Db cant open. %s%s", err, cross.NewLine))
 	}
 	defer db.Close()
 	var domains []entity.Domain
@@ -129,7 +179,7 @@ func loadDkimCache() {
 	dkimCacher := caching.InstanceDkim()
 	db, err := entity.GetDbContext()
 	if err != nil {
-		panic(fmt.Sprintf("Db cant open. %s%s", err, OS.NewLine))
+		panic(fmt.Sprintf("Db cant open. %s%s", err, cross.NewLine))
 	}
 	defer db.Close()
 	var dkimmers []entity.Dkimmer
