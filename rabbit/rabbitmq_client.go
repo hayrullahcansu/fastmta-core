@@ -16,6 +16,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// RabbitMqClient is a wrapper the official rabbitmq client.
+// it provides infinitive connection. makes easier to usage the client.
 type RabbitMqClient struct {
 	MakeSureConnection bool
 	IsConnected        bool
@@ -24,14 +26,17 @@ type RabbitMqClient struct {
 	Channel            *amqp.Channel
 }
 
+// NewRabbitMqDialString returns connection string from the global config
 func NewRabbitMqDialString() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%d/", global.StaticRabbitMqConfig.UserName, global.StaticRabbitMqConfig.Password, global.StaticRabbitMqConfig.Host, global.StaticRabbitMqConfig.Port)
 }
 
+// NewRabbitMq dials to rabbitmq server.
 func NewRabbitMq() (*amqp.Connection, error) {
 	return amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", global.StaticRabbitMqConfig.UserName, global.StaticRabbitMqConfig.Password, global.StaticRabbitMqConfig.Host, global.StaticRabbitMqConfig.Port))
 }
 
+// New returns new instance of RabbitMqClient
 func New() *RabbitMqClient {
 	client := &RabbitMqClient{
 		MakeSureConnection: false,
@@ -41,6 +46,7 @@ func New() *RabbitMqClient {
 	return client
 }
 
+// Connect to rabbitmq server. param1 makes sure infinity connection.
 func (client *RabbitMqClient) Connect(makeSure bool) (*amqp.Connection, *amqp.Channel) {
 	if !client.IsConnected {
 		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", client.Conf.UserName, client.Conf.Password, client.Conf.Host, client.Conf.Port))
@@ -62,6 +68,7 @@ func (client *RabbitMqClient) Connect(makeSure bool) (*amqp.Connection, *amqp.Ch
 	return client.Conn, client.Channel
 }
 
+// ConnectForInit just using for ensure rabbitmq settings.
 func (client *RabbitMqClient) ConnectForInit() (*amqp.Connection, *amqp.Channel, error) {
 	if !client.IsConnected {
 		conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", client.Conf.UserName, client.Conf.Password, client.Conf.Host, client.Conf.Port))
@@ -80,6 +87,8 @@ func (client *RabbitMqClient) ConnectForInit() (*amqp.Connection, *amqp.Channel,
 	return client.Conn, client.Channel, nil
 }
 
+// MakeSureConnectionEndless creates a chan and a goroutine that is for infinity connection.
+// if the connection is broken. It will try to connect again.
 func (client *RabbitMqClient) MakeSureConnectionEndless() {
 	if !client.MakeSureConnection {
 		client.MakeSureConnection = true
@@ -107,6 +116,7 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 	}
 }
 
+// QueueDeclare for declaring a queue
 func (client *RabbitMqClient) QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args amqp.Table) (amqp.Queue, error) {
 	return client.Channel.QueueDeclare(
 		name,
@@ -118,6 +128,7 @@ func (client *RabbitMqClient) QueueDeclare(name string, durable bool, autoDelete
 	)
 }
 
+// QueueBind for binding key in an exchange
 func (client *RabbitMqClient) QueueBind(name string, exchangeName string, routingKey string, noWait bool, args amqp.Table) error {
 	return client.Channel.QueueBind(
 		name,
@@ -128,6 +139,7 @@ func (client *RabbitMqClient) QueueBind(name string, exchangeName string, routin
 	)
 }
 
+// ExchangeDeclare for declaring an exchange.
 func (client *RabbitMqClient) ExchangeDeclare(name string, durable bool, autoDelete bool, internal bool, noWait bool, args amqp.Table) error {
 	return client.Channel.ExchangeDeclare(
 		name,       // name
@@ -140,6 +152,7 @@ func (client *RabbitMqClient) ExchangeDeclare(name string, durable bool, autoDel
 	)
 }
 
+// Publish for sent a message to custom exchange and queue
 func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandatory bool, immediate bool, data []byte, priority priority.Priority) error {
 	return client.Channel.Publish(
 		exchange,   // exchange
@@ -153,6 +166,7 @@ func (client *RabbitMqClient) Publish(exchange string, routingKey string, mandat
 		})
 }
 
+// Consume returns a channel that receives message from the queue.
 func (client *RabbitMqClient) Consume(queue string, consumerTag string, autoAck bool, exclusive bool, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error) {
 	return client.Channel.Consume(
 		queue,       // exchange
@@ -163,11 +177,14 @@ func (client *RabbitMqClient) Consume(queue string, consumerTag string, autoAck 
 		noWait,
 		args)
 }
+
+// Close the connection.
 func (client *RabbitMqClient) Close() {
 	client.Channel.Close()
 	client.Conn.Close()
 }
 
+// EnqueueInbound add a message that's type InboundMessage
 func (client *RabbitMqClient) EnqueueInbound(message *entity.InboundMessage) error {
 	data, err := json.Marshal(message)
 	if err != nil {
@@ -182,6 +199,8 @@ func (client *RabbitMqClient) EnqueueInbound(message *entity.InboundMessage) err
 		message.Priority,
 	)
 }
+
+// EnqueueInboundStaging add a message that's type Message
 func (client *RabbitMqClient) EnqueueInboundStaging(message *entity.Message) error {
 	data, err := json.Marshal(message)
 	if err != nil {
@@ -197,6 +216,7 @@ func (client *RabbitMqClient) EnqueueInboundStaging(message *entity.Message) err
 	)
 }
 
+// EnqueueOutboundMultiple add a message that's type Message
 func (client *RabbitMqClient) EnqueueOutboundMultiple(message *entity.Message) error {
 	data, err := json.Marshal(message)
 	if err != nil {
@@ -212,6 +232,7 @@ func (client *RabbitMqClient) EnqueueOutboundMultiple(message *entity.Message) e
 	)
 }
 
+// EnqueueOutboundNormal add a message that's type Message
 func (client *RabbitMqClient) EnqueueOutboundNormal(message *entity.Message) error {
 	que := constant.OutboundNormalQueueName
 	dd := message.AttemptSendTime.Sub(time.Now()) / time.Second

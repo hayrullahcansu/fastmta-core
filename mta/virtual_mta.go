@@ -19,13 +19,14 @@ type VMtaPool struct {
 type Rule struct {
 }
 
+// VirtualMta includes IPaddress, port, hostname, ability inbound processing or outbound processing.
 type VirtualMta struct {
 	lock                       *sync.Mutex
 	isInUsage                  bool
 	IPAddressString            string
 	VmtaHostName               string
 	VmtaIPAddr                 *net.IPAddr
-	GroupId                    int
+	GroupID                    int
 	Port                       int
 	IsSmtpInbound              bool
 	IsSmtpOutbound             bool
@@ -34,8 +35,8 @@ type VirtualMta struct {
 	ConcurrentConnectionNumber int
 }
 
-//CreateNewVirtualMta creates new dto
-func CreateNewVirtualMta(ip string, hostname string, port int, groupId int, isInbound bool, isOutbound bool, tls bool) *VirtualMta {
+//CreateNewVirtualMta creates new instance of VirtualMta
+func CreateNewVirtualMta(ip string, hostname string, port int, GroupID int, isInbound bool, isOutbound bool, tls bool) *VirtualMta {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		panic(fmt.Sprintf("%s given ip address cant parsing", ip))
@@ -52,7 +53,7 @@ func CreateNewVirtualMta(ip string, hostname string, port int, groupId int, isIn
 		IsSmtpOutbound:  isOutbound,
 		LocalPort:       0,
 		TLS:             tls,
-		GroupId:         groupId,
+		GroupID:         GroupID,
 	}
 	if port == 25 {
 		vm.TLS = false
@@ -60,6 +61,7 @@ func CreateNewVirtualMta(ip string, hostname string, port int, groupId int, isIn
 	return vm
 }
 
+// HandleLock locks the current virtual mta. that provides to block multiple usages.
 func (virtualMta *VirtualMta) HandleLock() {
 	virtualMta.lock.Lock()
 	defer virtualMta.lock.Unlock()
@@ -69,12 +71,14 @@ func (virtualMta *VirtualMta) HandleLock() {
 	virtualMta.ConcurrentConnectionNumber++
 }
 
+// IsInUsage returns it's in usage or not.
 func (virtualMta *VirtualMta) IsInUsage() bool {
 	virtualMta.lock.Lock()
 	defer virtualMta.lock.Unlock()
 	return virtualMta.isInUsage
 }
 
+// ReleaseLock unlocks the current virtual mta.
 func (virtualMta *VirtualMta) ReleaseLock() {
 	virtualMta.lock.Lock()
 	defer virtualMta.lock.Unlock()

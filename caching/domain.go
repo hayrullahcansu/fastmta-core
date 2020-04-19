@@ -7,6 +7,7 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// DomainCacher caches domain data in memory.
 type DomainCacher struct {
 	C *cache.Cache
 }
@@ -14,6 +15,7 @@ type DomainCacher struct {
 var instanceDomainCacher *DomainCacher
 var onceDomainCacher sync.Once
 
+// InstanceDomain returns new or existing instance of DomainCacher.
 func InstanceDomain() *DomainCacher {
 	onceDomainCacher.Do(func() {
 		instanceDomainCacher = &DomainCacher{

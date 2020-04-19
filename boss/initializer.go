@@ -28,6 +28,8 @@ const (
 	dkimFolderPath = "dkim"
 )
 
+// InitSystem initializes logger and configrations.
+// Ensures DB Schema and RabbitMQ queues, exchanges, routing keys...
 func InitSystem() {
 	logger.Instance()
 	confText := readConfigFromFile()

@@ -14,42 +14,44 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/transaction"
 )
 
-type BounceHandler struct {
+// Handler manages, routes, logs, requeue all bounce message if needed.
+type Handler struct {
 }
 
-var instanceHandler *BounceHandler
+var instanceHandler *Handler
 var once sync.Once
 
-func Handler() *BounceHandler {
+// Instance returns new or existing instance of BounceHandler
+func Instance() *Handler {
 	once.Do(func() {
 		instanceHandler = newHandler()
 	})
 	return instanceHandler
 }
 
-func newHandler() *BounceHandler {
-	handler := &BounceHandler{}
+func newHandler() *Handler {
+	handler := &Handler{}
 	return handler
 }
 
 // HandleSuccessToSend handles successful delivery.
 // Logs success
 // Deletes queued data
-func (h *BounceHandler) HandleSuccessToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleSuccessToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Infof("Sent message to %s", message.RcptTo)
 }
 
 // HandleFailedToSend handles failure of delivery.
 // Logs failure
 // Deletes queued data
-func (h *BounceHandler) HandleFailedToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleFailedToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Failed to send messsage to %s", message.RcptTo)
 }
 
 // HandleFailedToConnect handles failure of connection temprorely.
 // Logs failure of the connection
 // Defers the message
-func (h *BounceHandler) HandleFailedToConnect(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleFailedToConnect(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Failed to connect messsage to %s", message.RcptTo)
 	//TODO: Check if there was no MX record in DNS, so using A, we should fail and not retry.
 	h.HandleDeferralToSend(message, result, 15)
@@ -58,7 +60,7 @@ func (h *BounceHandler) HandleFailedToConnect(message *entity.Message, result *t
 // HandleDeferralToSend handles message deferal.
 // Logs deferral
 // Sets the next rety date time
-func (h *BounceHandler) HandleDeferralToSend(message *entity.Message, result *transaction.TransactionGroupResult, nextRetryIntervalMinutes int) {
+func (h *Handler) HandleDeferralToSend(message *entity.Message, result *transaction.TransactionGroupResult, nextRetryIntervalMinutes int) {
 	logger.Warningf("Deliver deferral to send messsage to %s", message.RcptTo)
 	message.DeferredCount++
 	var nextRetryInterval int = constant.DefaultRetryInterval
@@ -80,7 +82,7 @@ func (h *BounceHandler) HandleDeferralToSend(message *entity.Message, result *tr
 // HandleThrottleToSend handles message throttle.
 // Logs throttle
 // Sets the next rety date time
-func (h *BounceHandler) HandleThrottleToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleThrottleToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Delivery throttle to send messsage to %s", message.RcptTo)
 	message.Priority = priority.LOW
 	message.AttemptSendTime = time.Now().Add(time.Minute * 1)
@@ -89,12 +91,12 @@ func (h *BounceHandler) HandleThrottleToSend(message *entity.Message, result *tr
 
 // HandleEnqueueToSend handles maximum connection limit.
 // It enqueues the message immediately.
-func (h *BounceHandler) HandleEnqueueToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleEnqueueToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Enqueue to send messsage to %s", message.RcptTo)
 }
 
 // HandleUnavailableToSend handles a service unavailable event, should be same as defer but only wait 1 minute before next retry.
-func (h *BounceHandler) HandleUnavailableToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleUnavailableToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Service unavailable to send messsage to %s", message.RcptTo)
 	message.AttemptSendTime = time.Now().Add(time.Minute * 1)
 	queue.Instance().EnqueueOutboundNormal(message)
@@ -103,7 +105,7 @@ func (h *BounceHandler) HandleUnavailableToSend(message *entity.Message, result 
 
 // HandleTemporaryToSend handles something weird happening with this message, get it out of the way for a bit.
 // Wait 5 minutes before next retry.
-func (h *BounceHandler) HandleTemporaryToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+func (h *Handler) HandleTemporaryToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	message.AttemptSendTime = time.Now().Add(time.Minute * 5)
 	queue.Instance().EnqueueOutboundNormal(message)
 }

@@ -6,28 +6,32 @@ import (
 
 	"github.com/hayrullahcansu/fastmta-core/caching"
 	"github.com/hayrullahcansu/fastmta-core/constant"
-	OS "github.com/hayrullahcansu/fastmta-core/cross"
+	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/rabbit"
 	"github.com/hayrullahcansu/fastmta-core/relay"
 )
 
+// OutboundConsumerMultipleSender struct that includes RabbitMQClient
+// It provides to send multiple message to the same domain.
 type OutboundConsumerMultipleSender struct {
 	RabbitMqClient *rabbit.RabbitMqClient
 }
 
+// NewOutboundConsumerMultipleSender creates new instance of OutboundConsumerMultipleSender
 func NewOutboundConsumerMultipleSender() *OutboundConsumerMultipleSender {
 	return &OutboundConsumerMultipleSender{
 		RabbitMqClient: rabbit.New(),
 	}
 }
 
+// Run starts consuming from the queue
 func (consumer *OutboundConsumerMultipleSender) Run() {
 	consumer.RabbitMqClient.Connect(true)
 	ch, err := consumer.RabbitMqClient.Consume(constant.OutboundMultipleQueueName, "", false, false, true, nil)
 	if err != nil {
-		panic(fmt.Sprintf("error handled in %s queue: %s%s", constant.OutboundMultipleQueueName, err, OS.NewLine))
+		panic(fmt.Sprintf("error handled in %s queue: %s%s", constant.OutboundMultipleQueueName, err, cross.NewLine))
 	}
 	for {
 		select {

@@ -14,7 +14,7 @@ type VirtualMta struct {
 	HostName string `json:"hostname"`
 	Inbound  bool   `json:"inbound"`
 	Outbound bool   `json:"outbound"`
-	GroupId  int    `json:"group_id"`
+	GroupID  int    `json:"group_id"`
 }
 
 //RabbitMqConfig is rabbitmq configuration to connect

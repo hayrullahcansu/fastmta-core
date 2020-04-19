@@ -7,6 +7,7 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// DkimCacher caches dkim data in memory.
 type DkimCacher struct {
 	C *cache.Cache
 }
@@ -14,6 +15,7 @@ type DkimCacher struct {
 var instanceDkimCacher *DkimCacher
 var onceDkimCacher sync.Once
 
+// InstanceDkim returns new or existing instance of DkimCacher.
 func InstanceDkim() *DkimCacher {
 	onceDkimCacher.Do(func() {
 		instanceDkimCacher = &DkimCacher{

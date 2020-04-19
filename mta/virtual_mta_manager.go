@@ -9,10 +9,12 @@ import (
 var instanceManager *VirtualMtaManager
 var once sync.Once
 
+// VirtualMtaManager keeps all virtual MTA group in mapped table.
 type VirtualMtaManager struct {
 	virtualMtaGroups map[int]*VirtualMtaGroup
 }
 
+// InstanceManager returns new or existing instance of VirtualMtaManager
 func InstanceManager() *VirtualMtaManager {
 	once.Do(func() {
 		instanceManager = newManager()
@@ -26,17 +28,19 @@ func newManager() *VirtualMtaManager {
 	}
 	for _, vmta := range global.StaticConfig.IPAddresses {
 		for _, port := range global.StaticConfig.Ports {
-			vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, port, vmta.GroupId, vmta.Inbound, vmta.Outbound, false)
-			group, ok := instance.virtualMtaGroups[vm.GroupId]
+			vm := CreateNewVirtualMta(vmta.IP, vmta.HostName, port, vmta.GroupID, vmta.Inbound, vmta.Outbound, false)
+			group, ok := instance.virtualMtaGroups[vm.GroupID]
 			if !ok {
 				group = NewVirtualMtaGroup()
-				instance.virtualMtaGroups[vm.GroupId] = group
+				instance.virtualMtaGroups[vm.GroupID] = group
 			}
 			group.AddVirtualMta(vm)
 		}
 	}
 	return instance
 }
-func (m *VirtualMtaManager) GetVirtualMtaGroup(groupId int) *VirtualMtaGroup {
-	return m.virtualMtaGroups[groupId]
+
+// GetVirtualMtaGroup returns VirtualMtaGroup by GroupId
+func (m *VirtualMtaManager) GetVirtualMtaGroup(GroupID int) *VirtualMtaGroup {
+	return m.virtualMtaGroups[GroupID]
 }

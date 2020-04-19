@@ -18,6 +18,11 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/smtp/rw"
 )
 
+/*
+SmtpServer listens specific host and port as 25, 465, 587.
+Handles connections and serves SMTP protocol according to RFC standarts.
+Enqueue taken messages into the inbound queue of RabbitMQ.
+*/
 type SmtpServer struct {
 	ID           string
 	VMta         *mta.VirtualMta
@@ -26,6 +31,7 @@ type SmtpServer struct {
 	Port         int
 }
 
+// CreateNewSmtpServer returns new instance of SmtpServer.
 func CreateNewSmtpServer(vmta *mta.VirtualMta) *SmtpServer {
 	return &SmtpServer{
 		ID:           "",
@@ -36,6 +42,7 @@ func CreateNewSmtpServer(vmta *mta.VirtualMta) *SmtpServer {
 	}
 }
 
+// Run starts to listen specific host and port. Handles connection start a goroutine for starting inbound message process
 func (smtpServer *SmtpServer) Run() {
 	mergedAddress := fmt.Sprintf("%s:%d", smtpServer.VMta.IPAddressString, smtpServer.Port)
 	listener, err := net.Listen("tcp", mergedAddress)
@@ -57,11 +64,11 @@ func (smtpServer *SmtpServer) Run() {
 			//LOG
 		}
 		// Handle inbound connections in a new goroutine.
-		go smtpServer.InboundHandler(conn)
+		go smtpServer.inboundHandler(conn)
 	}
 }
 
-func (server *SmtpServer) InboundHandler(conn net.Conn) {
+func (server *SmtpServer) inboundHandler(conn net.Conn) {
 	defer conn.Close()
 	t := rw.NewNoTLSTransporter(conn)
 	_cmd := cmd.NewSmtpCommander(t)
@@ -221,7 +228,7 @@ func (server *SmtpServer) InboundHandler(conn net.Conn) {
 			//TODO: Check validity
 			mtaMessage.Data = fmt.Sprintf("Received: by %s;%s%s%s", server.VmtaHostName, cross.NewLine, time.Now().UTC(), cross.NewLine) + data
 
-			ok, err := AppendMessage(server, mtaMessage)
+			ok, err := appendMessage(server, mtaMessage)
 			if ok {
 				_ = _cmd.QueuedForDelivery250()
 				mtaMessage = nil
@@ -236,7 +243,7 @@ func (server *SmtpServer) InboundHandler(conn net.Conn) {
 
 }
 
-func AppendMessage(server *SmtpServer, message *entity.InboundMessage) (bool, error) {
+func appendMessage(server *SmtpServer, message *entity.InboundMessage) (bool, error) {
 	err := queue.Instance().EnqueueInbound(message)
 	if err == nil {
 		return true, err

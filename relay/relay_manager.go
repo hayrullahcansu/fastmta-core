@@ -52,25 +52,25 @@ func (r *Manager) SendMessage(outboundMessage *amqp.Delivery) {
 	_, result := agent.SendMessage(pureMessage)
 	switch result.TransactionResult {
 	case transaction.Success:
-		bounce.Handler().HandleSuccessToSend(pureMessage, result)
+		bounce.Instance().HandleSuccessToSend(pureMessage, result)
 	case transaction.HostNotFound:
 	case transaction.FailedToConnect:
-		bounce.Handler().HandleFailedToSend(pureMessage, result)
+		bounce.Instance().HandleFailedToSend(pureMessage, result)
 	case transaction.RejectedByRemoteServer:
 		if result.ResultMessage[0] == '5' {
-			bounce.Handler().HandleFailedToSend(pureMessage, result)
+			bounce.Instance().HandleFailedToSend(pureMessage, result)
 		} else {
-			bounce.Handler().HandleDeferralToSend(pureMessage, result, -1)
+			bounce.Instance().HandleDeferralToSend(pureMessage, result, -1)
 		}
 	case transaction.MaxMessages:
-		bounce.Handler().HandleThrottleToSend(pureMessage, result)
+		bounce.Instance().HandleThrottleToSend(pureMessage, result)
 	case transaction.MaxConnections:
-		bounce.Handler().HandleEnqueueToSend(pureMessage, result)
+		bounce.Instance().HandleEnqueueToSend(pureMessage, result)
 	case transaction.ServiceNotAvailable:
-		bounce.Handler().HandleUnavailableToSend(pureMessage, result)
+		bounce.Instance().HandleUnavailableToSend(pureMessage, result)
 	default:
 		// Something weird happening with this message, get it out of the way for a bit.
-		bounce.Handler().HandleTemporaryToSend(pureMessage, result)
+		bounce.Instance().HandleTemporaryToSend(pureMessage, result)
 	}
 	outboundMessage.Ack(false)
 }

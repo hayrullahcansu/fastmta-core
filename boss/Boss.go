@@ -8,6 +8,7 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/mta"
 )
 
+//Boss keeps configrations, virtual MTAs, instance of all consumers in memory.
 type Boss struct {
 	VirtualMtas              []*mta.VirtualMta
 	InboundMtas              []*in.SmtpServer
@@ -18,6 +19,7 @@ type Boss struct {
 	Router                   *core.Router
 }
 
+// New creates new instance of Boss
 func New() *Boss {
 	boss := &Boss{
 		VirtualMtas:              make([]*mta.VirtualMta, 0),
@@ -31,10 +33,11 @@ func New() *Boss {
 	return boss
 }
 
+//Run initializes configrations and virtual MTAs , starts consumers.
 func (boss *Boss) Run() {
 	for _, vmta := range global.StaticConfig.IPAddresses {
 		for _, port := range global.StaticConfig.Ports {
-			vm := mta.CreateNewVirtualMta(vmta.IP, vmta.HostName, port, vmta.GroupId, vmta.Inbound, vmta.Outbound, false)
+			vm := mta.CreateNewVirtualMta(vmta.IP, vmta.HostName, port, vmta.GroupID, vmta.Inbound, vmta.Outbound, false)
 			boss.VirtualMtas = append(boss.VirtualMtas, vm)
 			inboundServer := in.CreateNewSmtpServer(vm)
 			boss.InboundMtas = append(boss.InboundMtas, inboundServer)
