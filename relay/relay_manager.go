@@ -40,7 +40,7 @@ func newManager() *Manager {
 // SendMessage sends message to target via agent
 // And also it informs the result to bounce manager.
 func (r *Manager) SendMessage(outboundMessage *amqp.Delivery) {
-	_mta := mta.InstanceManager().GetVirtualMtaGroup(1).GetNextVirtualMta()
+	_mta := mta.InstanceManager().GetVirtualMtaGroup(0).GetNextVirtualMta()
 	agent := outbound.NewAgent(_mta)
 
 	pureMessage := &entity.Message{}

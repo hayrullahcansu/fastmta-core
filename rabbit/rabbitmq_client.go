@@ -93,23 +93,22 @@ func (client *RabbitMqClient) MakeSureConnectionEndless() {
 	if !client.MakeSureConnection {
 		client.MakeSureConnection = true
 		go func() {
-			notify := client.Conn.NotifyClose(make(chan *amqp.Error))           //error channel
+			notify := client.Conn.NotifyClose(make(chan *amqp.Error)) //error channel
+			err, ok := <-notify
+			if ok {
+				client.IsConnected = false
+				client.MakeSureConnection = false
+				logger.Infof("RabbitMqClient error handled: %s%s", err, cross.NewLine)
+				defer client.Connect(true)
+			}
+		}()
+		go func() {
 			notifyReturn := client.Channel.NotifyReturn(make(chan amqp.Return)) //error channel
-			for {
-				select {
-				case err := <-notify:
-					client.IsConnected = false
-					client.MakeSureConnection = false
-					logger.Infof("RabbitMqClient error handled: %s%s", err, cross.NewLine)
-					defer client.Connect(true)
-					break
-				case message, ok := <-notifyReturn:
-					if ok && client.IsConnected {
-						err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body, priority.LOW)
-						if err != nil {
-							logger.Infof("RabbitMqClient returned Message cant publish: %s%s", err, cross.NewLine)
-						}
-					}
+			message, ok := <-notifyReturn
+			if ok && client.IsConnected {
+				err := client.Publish(message.Exchange, message.RoutingKey, false, false, message.Body, priority.LOW)
+				if err != nil {
+					logger.Infof("RabbitMqClient returned Message cant publish: %s%s", err, cross.NewLine)
 				}
 			}
 		}()

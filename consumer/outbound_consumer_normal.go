@@ -43,8 +43,6 @@ func (consumer *OutboundConsumerNormalSender) Run() {
 				//exchange.InstanceRouter().
 				// }
 				go relay.InstanceManager().SendMessage(&outboundMessage)
-				logger.Infof("Sended message to %s", pureMessage.RcptTo)
-				outboundMessage.Ack(false)
 			}
 		}
 	}
