@@ -88,17 +88,12 @@ func (consumer *InboundStagingConsumer) Run() {
 						msg.Data = string(b.Bytes())
 					}
 				}
-				if false {
-					logger.Infof("XXX%s", cross.NewLine)
-					err = queue.Instance().EnqueueOutboundMultiple(msg)
-				} else {
-					logger.Infof("YYY%s", cross.NewLine)
-					err = queue.Instance().EnqueueOutboundNormal(msg)
-				}
+				err = queue.Instance().EnqueueOutboundNormal(msg)
 
 				if err == nil {
 					messageDelivery.Ack(true)
 				} else {
+					logger.Errorf("Error occured when try to enqueue to outbound %s", err.Error())
 					messageDelivery.Reject(true)
 				}
 			}

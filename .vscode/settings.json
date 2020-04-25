@@ -7,5 +7,13 @@
         "fastmta",
         "hayrullahcansu",
         "uuid"
-    ]
+    ],
+    "sqltools.connections": [
+        {
+            "database": "${workspaceFolder}\\test.db",
+            "dialect": "SQLite",
+            "name": "TEST"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
 }

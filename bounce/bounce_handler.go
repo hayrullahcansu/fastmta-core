@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hayrullahcansu/fastmta-core/transaction/status"
+
 	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/queue/priority"
 
@@ -38,6 +40,9 @@ func newHandler() *Handler {
 // Logs success
 // Deletes queued data
 func (h *Handler) HandleSuccessToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update("status", status.SUCCESS)
 	logger.Infof("Sent message to %s", message.RcptTo)
 }
 
@@ -45,6 +50,9 @@ func (h *Handler) HandleSuccessToSend(message *entity.Message, result *transacti
 // Logs failure
 // Deletes queued data
 func (h *Handler) HandleFailedToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update("status", status.FAILED)
 	logger.Errorf("Failed to send messsage to %s", message.RcptTo)
 }
 
@@ -53,6 +61,9 @@ func (h *Handler) HandleFailedToSend(message *entity.Message, result *transactio
 // Defers the message
 func (h *Handler) HandleFailedToConnect(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Failed to connect messsage to %s", message.RcptTo)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update("status", status.FAILED)
 	//TODO: Check if there was no MX record in DNS, so using A, we should fail and not retry.
 	h.HandleDeferralToSend(message, result, 15)
 }
@@ -75,6 +86,13 @@ func (h *Handler) HandleDeferralToSend(message *entity.Message, result *transact
 		}
 	}
 	message.AttemptSendTime = time.Now().Add(time.Duration(nextRetryInterval) * time.Minute)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	if message.DeferredCount >= constant.MaxDefferalLimit {
+		db.Model(&message).Update(map[string]interface{}{"status": status.FAILED, "attempt_send_time": message.AttemptSendTime})
+	} else {
+		db.Model(&message).Update(map[string]interface{}{"status": status.IN_QUEUE, "attempt_send_time": message.AttemptSendTime})
+	}
 	queue.Instance().EnqueueOutboundNormal(message)
 
 }
@@ -86,6 +104,9 @@ func (h *Handler) HandleThrottleToSend(message *entity.Message, result *transact
 	logger.Errorf("Delivery throttle to send messsage to %s", message.RcptTo)
 	message.Priority = priority.LOW
 	message.AttemptSendTime = time.Now().Add(time.Minute * 1)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update(map[string]interface{}{"status": status.IN_QUEUE, "attempt_send_time": message.AttemptSendTime, "priority": message.Priority})
 	queue.Instance().EnqueueOutboundNormal(message)
 }
 
@@ -93,12 +114,19 @@ func (h *Handler) HandleThrottleToSend(message *entity.Message, result *transact
 // It enqueues the message immediately.
 func (h *Handler) HandleEnqueueToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Enqueue to send messsage to %s", message.RcptTo)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update(map[string]interface{}{"status": status.IN_QUEUE})
+	queue.Instance().EnqueueOutboundNormal(message)
 }
 
 // HandleUnavailableToSend handles a service unavailable event, should be same as defer but only wait 1 minute before next retry.
 func (h *Handler) HandleUnavailableToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	logger.Errorf("Service unavailable to send messsage to %s", message.RcptTo)
 	message.AttemptSendTime = time.Now().Add(time.Minute * 1)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update(map[string]interface{}{"status": status.IN_QUEUE, "attempt_send_time": message.AttemptSendTime})
 	queue.Instance().EnqueueOutboundNormal(message)
 
 }
@@ -107,5 +135,8 @@ func (h *Handler) HandleUnavailableToSend(message *entity.Message, result *trans
 // Wait 5 minutes before next retry.
 func (h *Handler) HandleTemporaryToSend(message *entity.Message, result *transaction.TransactionGroupResult) {
 	message.AttemptSendTime = time.Now().Add(time.Minute * 5)
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&message).Update(map[string]interface{}{"status": status.IN_QUEUE, "attempt_send_time": message.AttemptSendTime})
 	queue.Instance().EnqueueOutboundNormal(message)
 }

@@ -1,13 +1,10 @@
 package consumer
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/cross"
-	"github.com/hayrullahcansu/fastmta-core/entity"
-	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/rabbit"
 	"github.com/hayrullahcansu/fastmta-core/relay"
 )
@@ -36,12 +33,6 @@ func (consumer *OutboundConsumerNormalSender) Run() {
 		select {
 		case outboundMessage, ok := <-ch:
 			if ok {
-				pureMessage := &entity.Message{}
-				json.Unmarshal(outboundMessage.Body, pureMessage)
-				logger.Infof("Received message From %s", constant.OutboundNormalQueueName)
-				// if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
-				//exchange.InstanceRouter().
-				// }
 				go relay.InstanceManager().SendMessage(&outboundMessage)
 			}
 		}

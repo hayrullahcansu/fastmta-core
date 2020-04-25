@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -48,6 +49,7 @@ func GetDbContext() (*gorm.DB, error) {
 		db.AutoMigrate(
 			&Message{},
 			&Transaction{},
+			&TransactionLog{},
 			&Domain{},
 			&MXRecord{},
 			&Dkimmer{},
@@ -55,4 +57,10 @@ func GetDbContext() (*gorm.DB, error) {
 		fmt.Println("migration done")
 	})
 	return db, err
+}
+
+func PanicOnError(err error) {
+	if err != nil {
+		logger.Panicf("Database exception: %s", err.Error())
+	}
 }

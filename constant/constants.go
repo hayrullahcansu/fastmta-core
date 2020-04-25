@@ -25,8 +25,11 @@ const (
 const (
 	ReadDeadLine         = time.Second * time.Duration(30)
 	WriteDeadLine        = time.Second * time.Duration(30)
-	MtaName              = "ZetaMail"
+	MtaName              = "FastMTA"
 	MaxErrorLimit        = 10
 	MaxRetryInterval     = 3 * 60
 	DefaultRetryInterval = 10
+	MaxDefferalLimit     = 10
+	DefaultGroupID       = 0
+	HeaderGroupKey       = "X-Group-Id"
 )

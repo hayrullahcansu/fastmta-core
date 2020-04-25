@@ -12,6 +12,7 @@ import (
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/hayrullahcansu/fastmta-core/smtp/outbound"
 	"github.com/hayrullahcansu/fastmta-core/transaction"
+	"github.com/hayrullahcansu/fastmta-core/transaction/status"
 
 	"github.com/hayrullahcansu/fastmta-core/mta"
 )
@@ -40,12 +41,20 @@ func newManager() *Manager {
 // SendMessage sends message to target via agent
 // And also it informs the result to bounce manager.
 func (r *Manager) SendMessage(outboundMessage *amqp.Delivery) {
-	_mta := mta.InstanceManager().GetVirtualMtaGroup(0).GetNextVirtualMta()
-	agent := outbound.NewAgent(_mta)
-
 	pureMessage := &entity.Message{}
 	json.Unmarshal(outboundMessage.Body, pureMessage)
 	logger.Infof("Received message From %s", constant.OutboundNormalQueueName)
+	// if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
+	//exchange.InstanceRouter().
+	// }
+	db, err := entity.GetDbContext()
+	entity.PanicOnError(err)
+	db.Model(&pureMessage).Update("status", status.OUT_QUEUE)
+	db.Close()
+
+	_mta := mta.InstanceManager().GetVirtualMtaGroup(pureMessage.GroupID).GetNextVirtualMta()
+	agent := outbound.NewAgent(_mta)
+
 	// if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
 	//exchange.InstanceRouter().
 	// }

@@ -46,6 +46,7 @@ type Message struct {
 	MessageDestination string            `gorm:"type:varchar(10);not null;Column:message_destination"`
 	AttemptSendTime    time.Time         `gorm:"Column:attempt_send_time;INDEX"`
 	DeferredCount      int               `gorm:"Column:deffered_count;"`
+	GroupID            int               `gorm:"Column:group_id;"`
 	Priority           priority.Priority `gorm:"Column:priority;"`
 }
 
@@ -56,6 +57,14 @@ type Transaction struct {
 	ServerHostname    string    `gorm:"type:varchar(250);not null;Column:server_hostname"`
 	ServerResponse    string    `gorm:"Column:server_response"`
 	TransactionStatus int       `gorm:"Column:transaction_status"`
+}
+type TransactionLog struct {
+	gorm.Model
+	MessageID       string    `gorm:"INDEX;not null;Column:message_id"`
+	Writer          string    `gorm:"type:varchar(250);not null;Column:writer"`
+	Message         string    `gorm:"Column:message"`
+	Command         string    `gorm:"Column:command"`
+	TransactionTime time.Time `gorm:"Column:transaction_timestamp;INDEX"`
 }
 
 type Domain struct {
