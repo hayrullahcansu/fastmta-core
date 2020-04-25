@@ -62,6 +62,7 @@ type TransactionLog struct {
 	gorm.Model
 	MessageID       string    `gorm:"INDEX;not null;Column:message_id"`
 	Writer          string    `gorm:"type:varchar(250);not null;Column:writer"`
+	IO              string    `gorm:"Column:io"`
 	Message         string    `gorm:"Column:message"`
 	Command         string    `gorm:"Column:command"`
 	TransactionTime time.Time `gorm:"Column:transaction_timestamp;INDEX"`

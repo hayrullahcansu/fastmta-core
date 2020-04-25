@@ -42,6 +42,14 @@ func (s *SmtpCommander) ExecData(data string) error {
 	return s.t.WriteLine(fmt.Sprintf("%s%s.", data, cross.NewLine))
 }
 
+func (s *SmtpCommander) ExecRset() error {
+	return s.t.WriteLine("RSET")
+}
+
+func (s *SmtpCommander) ExecQuit() error {
+	return s.t.WriteLine("QUIT")
+}
+
 /*			WRITING COMMANDS			*/
 func (s *SmtpCommander) WriteLine(data string) error {
 	return s.t.WriteLine(data)
