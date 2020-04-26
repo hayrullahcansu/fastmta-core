@@ -29,7 +29,6 @@ type Agent struct {
 	canTLS        bool
 }
 
-//TODO: fill params
 func NewAgent(vmt *mta.VirtualMta) *Agent {
 	agent := &Agent{
 		virtualMta: vmt,
