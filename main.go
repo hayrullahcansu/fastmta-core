@@ -22,7 +22,9 @@ const (
 )
 
 func main() {
-
+	// err := smtp.SendMail("smtp.gmail.com:587",
+	// 	smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+	// 	from, []string{to}, []byte(msg))
 	// host = "gmail-smtp-in.l.google.COM:25"
 	// dialer := &net.Dialer{
 	// 	Timeout:   Timeout,

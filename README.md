@@ -67,6 +67,15 @@ All options changeable from within UI.
 # TODO
 
 - [x] TODO Transactions SQL
+- [ ] TODO Support Docker
+- [ ] TODO Go Module
+- [ ] TODO Test container
+- [ ] TODO Web UI
+- [ ] TODO AUTH PLAIN
+- [ ] TODO AUTH LOGIN
+- [ ] TODO AUTH CRAM-MD5 ```ref: https://www.samlogic.net/articles/smtp-commands-reference-auth.htm``` 
+- [ ] TODO Gzip or similar compressor support
+- [ ] TODO Support SQL providers
 - [ ] TODO Send signal to main process to kill ```ref: initializer.go``` 
 - [ ] TODO Check if there was no MX record in DNS, so using A, we should fail and not retry ```ref: bounce_handler.go```
 - [ ] TODO report dkim error ```ref: inbound_staging_consumer.go```
