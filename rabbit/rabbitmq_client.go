@@ -233,20 +233,7 @@ func (client *RabbitMqClient) EnqueueOutboundMultiple(message *entity.Message) e
 
 // EnqueueOutboundNormal add a message that's type Message
 func (client *RabbitMqClient) EnqueueOutboundNormal(message *entity.Message) error {
-	que := constant.OutboundNormalQueueName
-	dd := message.AttemptSendTime.Sub(time.Now()) / time.Second
-	diff := math.Ceil(float64(dd))
-	if diff > 0 {
-		if diff < 10 {
-			que = constant.OutboundWaiting1
-		} else if diff < 60 {
-			que = constant.OutboundWaiting10
-		} else if diff < 300 {
-			que = constant.OutboundWaiting60
-		} else {
-			que = constant.OutboundWaiting300
-		}
-	}
+	que := getOutboundQueue(message)
 	data, err := json.Marshal(message)
 	if err != nil {
 		return err
@@ -259,4 +246,23 @@ func (client *RabbitMqClient) EnqueueOutboundNormal(message *entity.Message) err
 		data,
 		message.Priority,
 	)
+}
+
+func getOutboundQueue(message *entity.Message) string {
+	que := constant.OutboundNormalQueueName
+	dd := message.AttemptSendTime.Sub(time.Now()) / time.Second
+	diff := math.Ceil(float64(dd))
+	fmt.Println(diff)
+	if diff > 0 {
+		if diff < 10 {
+			que = constant.OutboundWaiting1
+		} else if diff < 60 {
+			que = constant.OutboundWaiting10
+		} else if diff < 300 {
+			que = constant.OutboundWaiting60
+		} else {
+			que = constant.OutboundWaiting300
+		}
+	}
+	return que
 }
