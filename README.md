@@ -68,7 +68,7 @@ All options changeable from within UI.
 
 - [x] TODO Transactions SQL
 - [ ] TODO Support Docker
-- [ ] TODO Go Module
+- [x] TODO Go Module
 - [ ] TODO Test container
 - [ ] TODO Web UI
 - [ ] TODO AUTH PLAIN
