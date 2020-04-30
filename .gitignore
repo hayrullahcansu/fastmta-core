@@ -14,3 +14,12 @@
 debug
 test.db
 [Oo]ut/
+vendor
+
+# Typical backup/temporary files of editors
+*~
+*#
+
+# Never include any accidentally created vendor dirs.
+# This is a library!
+vendor/
