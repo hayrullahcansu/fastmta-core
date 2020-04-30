@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/hayrullahcansu/fastmta-core/util"
+
 	"github.com/hayrullahcansu/fastmta-core/dns"
 
 	"github.com/emersion/go-dkim"
@@ -34,16 +36,47 @@ const (
 // Ensures DB Schema and RabbitMQ queues, exchanges, routing keys...
 func InitSystem() {
 	logger.Instance()
-	confText := readConfigFromFile()
-	config := conf.Config{}
-	json.Unmarshal([]byte(confText), &config)
-	global.StaticConfig = &config
+	config := initConfig(readConfigFromFile())
+	global.StaticConfig = config
 	global.StaticRabbitMqConfig = &config.RabbitMq
 	dbEnsureCreated()
 	defineRabbitMqEnvironment()
 	go loadDomainCache()
 	go loadDkimCache()
 
+}
+
+func initConfig(data string) *conf.Config {
+	config := conf.Config{}
+	json.Unmarshal([]byte(data), &config)
+	if !validationConfig(&config) {
+		panic("invalid configration")
+	}
+	return &config
+}
+
+/*
+
+	"mysql", 	"user:password@(localhost)/dbname?charset=utf8&parseTime=True&loc=Local"
+	"postgres", "host=myhost port=myport user=gorm dbname=gorm password=mypassword"
+	"sqlite3", 	"/tmp/database_file_name.db"
+	"mssql", 	"sqlserver://username:password@localhost:1433?database=dbname"
+
+*/
+func validationConfig(config *conf.Config) bool {
+	drivers := map[string]byte{
+		"sqlite3":  1,
+		"mysql":    1,
+		"mssql":    1,
+		"postgres": 1,
+	}
+	if _, ok := drivers[config.Database.Driver]; !ok {
+		return false
+	}
+	if util.IsNullOrEmpty(config.Database.Connection) {
+		return false
+	}
+	return true
 }
 
 func readConfigFromFile() string {

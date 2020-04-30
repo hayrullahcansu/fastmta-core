@@ -43,6 +43,10 @@ All options changeable from within UI.
 
 ```json
 {
+  "database": {
+    "driver":"sqlite3",
+    "connection":"test.db"
+  },
   "ip_addressess": [
     {
       "ip": "127.0.0.1",
@@ -63,11 +67,23 @@ All options changeable from within UI.
 }
 ```
 
+| Param Name | Variable Type | Requirement | Description                         | Value                                                                             |
+|------------|---------------|-------------|-------------------------------------|-------------------------------------------------------------------------------------|
+| driver       | `:string`     |    yes`*`   | SQL Provider                       |  `sqlite3`, `mysql`, `mssql` `postgresql`                                                                                   |
+| connection      | `:string`     |    yes`*`   | Topic pattern can be layout         |  Described below  |
+
+#### Should set connection string with these formats. 
+```
+sqlite    ->  "/tmp/database_file_name.db"
+mysql     ->  "user:password@(localhost)/dbname?charset=utf8&parseTime=True&loc=Local
+mssql     ->  "sqlserver://username:password@localhost:1433?database=dbnam"
+postgres  ->  "host=myhost port=myport user=gorm dbname=gorm password=mypassword"
+```
 
 # TODO
 
 - [x] TODO Transactions SQL
-- [ ] TODO Support Docker
+- [x] TODO Support Docker
 - [x] TODO Go Module
 - [ ] TODO Test container
 - [ ] TODO Web UI

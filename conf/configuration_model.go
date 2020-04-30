@@ -2,10 +2,10 @@ package conf
 
 //Config is application configs
 type Config struct {
-	Test        int            `json:"test"`
 	IPAddresses []VirtualMta   `json:"ip_addressess"`
 	Ports       []int          `json:"ports"`
 	RabbitMq    RabbitMqConfig `json:"rabbitmq"`
+	Database    DatabaseConfig `json:"database"`
 }
 
 //VirtualMta is ip addresses and define working types
@@ -25,4 +25,10 @@ type RabbitMqConfig struct {
 	Password     string `json:"password"`
 	VirtualHost  string `json:"virtual_host"`
 	ExchangeName string `json:"exchange_name"`
+}
+
+//RabbitMqConfig is rabbitmq configuration to connect
+type DatabaseConfig struct {
+	Driver     string `json:"driver"`
+	Connection string `json:"connection"`
 }

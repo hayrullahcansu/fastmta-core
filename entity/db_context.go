@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/hayrullahcansu/fastmta-core/global"
+
 	"github.com/hayrullahcansu/fastmta-core/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -15,31 +17,28 @@ import (
 
 var once sync.Once
 
-func Run() {
-	db, err := gorm.Open("sqlite3", "test.db")
-	if err != nil {
-		panic("failed to connect database")
-	}
-	defer db.Close()
-	// Create
-	//db.Create(&Product{Code: "L1212", Price: 1000})
-
-	// Read
-	//var product Product
-	//db.First(&product, 1)                   // find product with id 1
-	//db.First(&product, "code = ?", "L1212") // find product with code l1212
-
-	// Update - update product's price to 2000
-	//db.Model(&product).Update("Price", 2000)
-
-	// Delete - delete product
-	//db.Delete(&product)
-
+func GetDbContext() (*gorm.DB, error) {
+	return openDb(
+		global.StaticConfig.Database.Driver,
+		global.StaticConfig.Database.Connection,
+	)
 }
 
-func GetDbContext() (*gorm.DB, error) {
+// Create
+//db.Create(&Product{Code: "L1212", Price: 1000})
 
-	db, err := gorm.Open("sqlite3", "test.db")
+// Read
+//var product Product
+//db.First(&product, 1)                   // find product with id 1
+//db.First(&product, "code = ?", "L1212") // find product with code l1212
+
+// Update - update product's price to 2000
+//db.Model(&product).Update("Price", 2000)
+
+// Delete - delete product
+//db.Delete(&product)
+func openDb(driver string, connection string) (*gorm.DB, error) {
+	db, err := gorm.Open(driver, connection)
 	if err != nil {
 		panic("failed to connect database")
 	}
