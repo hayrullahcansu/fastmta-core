@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hayrullahcansu/fastmta-core/caching"
 	"github.com/hayrullahcansu/fastmta-core/constant"
 	"github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/entity"
@@ -40,9 +39,9 @@ func (consumer *OutboundConsumerMultipleSender) Run() {
 				pureMessage := &entity.Message{}
 				json.Unmarshal(outboundMessage.Body, pureMessage)
 				logger.Infof("Recieved message From %s", constant.OutboundMultipleQueueName)
-				if _, ok := caching.InstanceDomain().C.Get(pureMessage.Host); !ok {
-					//exchange.InstanceRouter().
-				}
+				// if _, ok := caching.InstanceDomain().Get(pureMessage.Host); !ok {
+				//exchange.InstanceRouter().
+				// }
 				go relay.InstanceManager().SendMessage(&outboundMessage)
 				logger.Infof("queued message to send %s", pureMessage.RcptTo)
 

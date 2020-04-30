@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/hayrullahcansu/fastmta-core/dns"
+
 	"github.com/emersion/go-dkim"
 	"github.com/hayrullahcansu/fastmta-core/caching"
 	"github.com/hayrullahcansu/fastmta-core/conf"
@@ -170,7 +172,9 @@ func loadDomainCache() {
 	for currentPage < count/limit+1 {
 		if db.Offset(limit*currentPage).Limit(limit).Model(&entity.Domain{}).Find(&domains).Error == nil {
 			for _, domain := range domains {
-				domainCacher.C.Add(domain.DomainName, domain, cache.NoExpiration)
+				if _d, err := dns.NewDomain(domain.DomainName); err == nil {
+					domainCacher.AddOrUpdate(domain.DomainName, _d)
+				}
 			}
 		}
 		currentPage++
