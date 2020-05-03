@@ -2,8 +2,12 @@ package conf
 
 //Config is application configs
 type Config struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	IsEnabled   bool           `json:"is_enabled"`
 	IPAddresses []VirtualMta   `json:"ip_addressess"`
 	Ports       []int          `json:"ports"`
+	Boss        BossConfig     `json:"boss`
 	RabbitMq    RabbitMqConfig `json:"rabbitmq"`
 	Database    DatabaseConfig `json:"database"`
 }
@@ -31,4 +35,10 @@ type RabbitMqConfig struct {
 type DatabaseConfig struct {
 	Driver     string `json:"driver"`
 	Connection string `json:"connection"`
+}
+
+//BossConfig defines Host and Port
+type BossConfig struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
 }

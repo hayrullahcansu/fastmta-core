@@ -1,7 +1,14 @@
 {
+  "id": "broker-1",
+  "name": "broker-1",
+  "is_enabled": true,
   "database": {
-    "driver":"sqlite3",
-    "connection":"test.db"
+    "driver": "sqlite3",
+    "connection": "C:\\sqlite\\fastmta.db"
+  },
+  "boss": {
+    "host": "localhost",
+    "port": 3535
   },
   "ip_addressess": [
     {
@@ -11,7 +18,7 @@
       "outbound": true
     }
   ],
-  "ports": [25, 465, 587],
+  "ports": [26, 466, 588],
   "rabbitmq": {
     "host": "localhost",
     "port": 5672,

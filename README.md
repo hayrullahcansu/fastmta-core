@@ -83,7 +83,7 @@ postgres  ->  "host=myhost port=myport user=gorm dbname=gorm password=mypassword
 # TODO
 
 - [x] TODO Transactions SQL
-- [x] TODO Support Docker
+- [ ] TODO Support Docker
 - [x] TODO Go Module
 - [ ] TODO Test container
 - [ ] TODO Web UI
@@ -91,7 +91,7 @@ postgres  ->  "host=myhost port=myport user=gorm dbname=gorm password=mypassword
 - [ ] TODO AUTH LOGIN
 - [ ] TODO AUTH CRAM-MD5 ```ref: https://www.samlogic.net/articles/smtp-commands-reference-auth.htm``` 
 - [ ] TODO Gzip or similar compressor support
-- [ ] TODO Support SQL providers
+- [x] TODO Support SQL providers
 - [ ] TODO Send signal to main process to kill ```ref: initializer.go``` 
 - [ ] TODO Check if there was no MX record in DNS, so using A, we should fail and not retry ```ref: bounce_handler.go```
 - [ ] TODO report dkim error ```ref: inbound_staging_consumer.go```

@@ -7,7 +7,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/hayrullahcansu/fastmta-core/boss"
+	"github.com/hayrullahcansu/fastmta-core/global"
+
+	"github.com/hayrullahcansu/fastmta-core/broker"
 	OS "github.com/hayrullahcansu/fastmta-core/cross"
 	"github.com/hayrullahcansu/fastmta-core/logger"
 )
@@ -69,8 +71,12 @@ func main() {
 		os.Exit(1)
 	}()
 
-	boss.InitSystem()
-	boss := boss.New()
+	broker.InitSystem()
+	broker := broker.New(
+		global.StaticConfig.ID,
+		global.StaticConfig.Name,
+		global.StaticConfig.IsEnabled,
+	)
 	// rabbitClient := queue.New()
 	// rabbitClient.Connect(true)
 	// _, _ = rabbitClient.Consume(queue.InboundQueueName, "", false, false, true, nil)
@@ -79,7 +85,7 @@ func main() {
 	// rabbitClient2.Connect(true)
 	// _, _ = rabbitClient2.Consume(queue.InboundQueueName, "", false, false, true, nil)
 
-	boss.Run()
+	broker.Run()
 
 	select {}
 

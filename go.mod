@@ -6,6 +6,7 @@ require (
 	github.com/emersion/go-dkim v0.3.0
 	github.com/go-test/deep v1.0.6
 	github.com/google/uuid v1.1.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/gorm v1.9.12
 	github.com/jinzhu/now v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
